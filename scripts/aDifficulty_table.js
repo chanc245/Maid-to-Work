@@ -11,6 +11,7 @@ const DIFFICULTY = [
     chore2: {
       goodSpawnPercent: 60,
       badSpawnPercent: 40,
+      badBloodPercent: 50,
       goatAnimationDurationMs: 800,
     },
     chore3: {
@@ -27,9 +28,10 @@ const DIFFICULTY = [
       roundTimeLimitSec: 28, // example harder: less time
     },
     chore2: {
-      goodSpawnPercent: 50,
-      badSpawnPercent: 50,
-      goatAnimationDurationMs: 900,
+      goodSpawnPercent: 60,
+      badSpawnPercent: 40,
+      badBloodPercent: 70,
+      goatAnimationDurationMs: 800,
     },
     chore3: {
       stainCount: 4,
@@ -45,9 +47,10 @@ const DIFFICULTY = [
       roundTimeLimitSec: 26, // example harder: less time
     },
     chore2: {
-      goodSpawnPercent: 45,
-      badSpawnPercent: 55,
-      goatAnimationDurationMs: 1000,
+      goodSpawnPercent: 60,
+      badSpawnPercent: 40,
+      badBloodPercent: 50,
+      goatAnimationDurationMs: 800,
     },
     chore3: {
       stainCount: 5,

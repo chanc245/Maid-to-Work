@@ -16,7 +16,8 @@ let c1GoodImgs = [],
 // CHORE 2
 let bg_chore2_table, bg_chore_paper, goat_static, goat_open;
 let c2GoodImgs = [],
-  c2BadImgs = [];
+  c2BadImgs = [],
+  c2BadBloodImgs = [];
 
 // CHORE 3
 let bg_chore3_river, item_smug, item_sponge;
@@ -72,9 +73,10 @@ function preload() {
   c2BadImgs.push(loadImage("assets/chore2/paper_bad_1.png"));
   c2BadImgs.push(loadImage("assets/chore2/paper_bad_2.png"));
   c2BadImgs.push(loadImage("assets/chore2/paper_bad_3.png"));
-  c2BadImgs.push(loadImage("assets/chore2/paper_blood_1.png"));
-  c2BadImgs.push(loadImage("assets/chore2/paper_blood_2.png"));
-  c2BadImgs.push(loadImage("assets/chore2/paper_blood_3.png"));
+
+  c2BadBloodImgs.push(loadImage("assets/chore2/paper_blood_1.png"));
+  c2BadBloodImgs.push(loadImage("assets/chore2/paper_blood_2.png"));
+  c2BadBloodImgs.push(loadImage("assets/chore2/paper_blood_3.png"));
 
   // ========= CHORE 3 assets =========
   bg_chore3_river = loadImage("assets/chore3/bg_chore3_river.png");
