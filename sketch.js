@@ -84,6 +84,7 @@ function preload() {
   clothesImgs.push(loadImage("assets/chore3/clothes_03_shirt.png"));
 
   item_smug = loadImage("assets/chore3/item_smug.png");
+  item_bloodSmug = loadImage("assets/chore3/item_bloodSmug.png");
   item_sponge = loadImage("assets/chore3/item_sponge.png");
 }
 

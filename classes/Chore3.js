@@ -19,6 +19,7 @@
       let STAIN_COUNT = cfg.stainCount;
       let STAIN_FADE_PER_FRAME = cfg.stainFadePerFrame;
       let ROUND_TIME_LIMIT_SEC = cfg.roundTimeLimitSec;
+      let BLOOD_SMUG_RATE = constrain(cfg.bloodSmugRate ?? 0, 0, 1); // NEW: 0..1
 
       // layout
       let dx = 10,
@@ -45,16 +46,39 @@
 
       // stains
       let clothesBound = 20;
+      /** spots: { x, y, opacity, img } */
       let spotOffsets = [];
+
+      function pickSmudgeImage() {
+        // Choose between normal and blood based on BLOOD_SMUG_RATE
+        if (
+          random() < BLOOD_SMUG_RATE &&
+          typeof item_bloodSmug !== "undefined"
+        ) {
+          return item_bloodSmug;
+        }
+        return item_smug;
+      }
+
       function resetStains() {
         spotOffsets = [];
         for (let i = 0; i < STAIN_COUNT; i++) {
           const offsetX = random(-clothesBound / 2, clothesBound / 2);
           const offsetY = random(-clothesBound / 2, clothesBound / 2);
+
+          // decide blood vs normal
+          const isBlood = random() < (cfg.bloodSmugRate ?? 0);
+          const img =
+            isBlood && typeof item_bloodSmug !== "undefined"
+              ? item_bloodSmug
+              : item_smug;
+
           spotOffsets.push({
             x: offsetX + dw / 2,
             y: offsetY + dh / 2,
-            opacity: 100,
+            opacity: 100, // 0..255 as you decrement
+            kind: isBlood ? "blood" : "normal",
+            img,
           });
         }
       }
@@ -151,9 +175,16 @@
             if (spot.opacity > 0) allFaded = false;
 
             darkLayer.push();
-            darkLayer.tint(0, spot.opacity);
+            // Normal stains: black; Blood stains: red
+            if (spot.kind === "blood") {
+              // red with alpha
+              darkLayer.tint(200, 0, 0, spot.opacity);
+            } else {
+              // black with alpha
+              darkLayer.tint(0, 0, 0, spot.opacity);
+            }
             darkLayer.image(
-              item_smug,
+              spot.img, // use the chosen sprite
               spotX - smugSize / 2,
               spotY - smugSize / 2,
               smugSize,
@@ -210,11 +241,20 @@
           pix.textAlign(LEFT, TOP);
           pix.textSize(8);
           pix.text(`clean:${score}`, 17, 2);
-          pix.text(`time:${timeLeft}s`, 17, 10);
+          pix.text(
+            `time:${
+              timerStarted
+                ? max(
+                    0,
+                    ROUND_TIME_LIMIT_SEC -
+                      floor((millis() - gameStartTime) / 1000)
+                  )
+                : ROUND_TIME_LIMIT_SEC
+            }s`,
+            17,
+            10
+          );
           pix.pop();
-        }
-
-        if (gameEnded) {
         }
 
         // sponge cursor (on top)

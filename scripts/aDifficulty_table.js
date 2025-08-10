@@ -6,14 +6,19 @@ const DIFFICULTY = [
     chore1: {
       fallSpeedMultiplier: 1.1,
       bloodItemFrequency: 1,
-      roundTimeLimitSec: 30, // NEW: time-only end condition
+      roundTimeLimitSec: 30,
     },
     chore2: {
       goodSpawnPercent: 60,
       badSpawnPercent: 40,
       goatAnimationDurationMs: 800,
     },
-    chore3: { stainCount: 3, stainFadePerFrame: 3, roundTimeLimitSec: 30 },
+    chore3: {
+      stainCount: 3,
+      stainFadePerFrame: 3,
+      roundTimeLimitSec: 30,
+      bloodSmugRate: 0.01,
+    },
   },
   {
     chore1: {
@@ -26,7 +31,12 @@ const DIFFICULTY = [
       badSpawnPercent: 50,
       goatAnimationDurationMs: 900,
     },
-    chore3: { stainCount: 4, stainFadePerFrame: 3.5, roundTimeLimitSec: 28 },
+    chore3: {
+      stainCount: 4,
+      stainFadePerFrame: 3.5,
+      roundTimeLimitSec: 28,
+      bloodSmugRate: 0.22,
+    }, // 22%
   },
   {
     chore1: {
@@ -39,6 +49,11 @@ const DIFFICULTY = [
       badSpawnPercent: 55,
       goatAnimationDurationMs: 1000,
     },
-    chore3: { stainCount: 5, stainFadePerFrame: 4, roundTimeLimitSec: 26 },
+    chore3: {
+      stainCount: 5,
+      stainFadePerFrame: 4,
+      roundTimeLimitSec: 26,
+      bloodSmugRate: 0.3,
+    }, // 30%
   },
 ];
