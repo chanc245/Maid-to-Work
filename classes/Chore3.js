@@ -214,20 +214,7 @@
           pix.pop();
         }
 
-        // end overlay
         if (gameEnded) {
-          pix.push();
-          pix.fill(0, 200);
-          pix.rect(0, 0, W, H);
-          pix.fill(255);
-          pix.textAlign(LEFT, CENTER);
-          pix.textSize(16);
-          pix.text("END", 0, H / 2 - 10);
-          pix.textSize(8);
-          pix.text(`Score: ${score}`, 0, H / 2 + 4);
-          pix.text("Click to play again", 0, H / 2 + 18);
-          pix.textAlign(LEFT, TOP);
-          pix.pop();
         }
 
         // sponge cursor (on top)

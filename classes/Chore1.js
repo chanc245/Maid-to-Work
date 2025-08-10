@@ -1,8 +1,7 @@
 (function () {
-  // Catch the Good Food (falling items) — countdown removed, p5 state isolated
   window.Chore1 = class {
     constructor(shared) {
-      this.shared = shared; // { pix, W, H }
+      this.shared = shared;
       this._isOver = false;
       this._score = 0;
       this.usesCustomCursor = false;
@@ -13,20 +12,17 @@
         H = this.shared.H,
         pix = this.shared.pix;
 
-      // ---- config knobs ----
       let SPEED_RATE = cfg.fallSpeedMultiplier;
       const SPEED_PERIOD_MS = 10000;
       let BLOOD_PER_20 = cfg.bloodItemFrequency;
       let GOOD_FALL_LIMIT = cfg.maxGoodItemsPerRound;
 
-      // ---- state ----
       const STATE_PLAYING = 1,
         STATE_END = 2;
       let state = STATE_PLAYING;
       let score = 0;
       let goodFallsCount = 0;
 
-      // player & items
       let player = { w: 20, h: 20, x: 17, y: H - 20, speed: 2.5 };
 
       let good = {
@@ -40,11 +36,9 @@
       };
       let bad = { x: 8, y: -16, w: 16, h: 16, baseVy: 0.4, vy: 0.7, img: null };
 
-      // timers
       let speedMult = 1.0;
       let lastSpeedTickMs = millis();
 
-      // helpers
       const randInt = (min, maxExclusive) => floor(random(min, maxExclusive));
       const aabbHit = (a, b) =>
         a.x < b.x + b.w &&
@@ -97,13 +91,11 @@
       function drawWorld() {
         pix.image(bg_chore1, 0, 0, 64, 64);
 
-        // mouse-controlled paddle
         player.x = floor(
           constrain((mouseX / width) * W - player.w / 2, 0, W - player.w)
         );
         pix.image(item_pot, player.x, player.y, player.w, player.h);
 
-        // items
         pix.image(
           good.img,
           floor(constrain(good.x, 0, W - good.w)),
@@ -129,41 +121,19 @@
         pix.pop();
       }
 
-      function drawEndScreen() {
-        pix.push();
-        pix.fill(0, 200);
-        pix.rect(0, 0, W, H);
-
-        pix.fill(255);
-        pix.textAlign(LEFT, CENTER);
-        pix.textSize(16);
-        pix.text("END", 0, H / 2 - 10);
-
-        pix.textSize(8);
-        pix.text(`Score: ${score}`, 0, H / 2 + 4);
-        pix.text("Click to play again", 0, H / 2 + 18);
-        pix.textAlign(LEFT, TOP);
-        pix.pop();
-      }
-
-      // init spawns
       resetGood();
       resetBad();
 
-      // per-frame step
       this._step = () => {
         if (state === STATE_PLAYING) {
-          // speed progression
           const now = millis();
           const dtMs = now - lastSpeedTickMs;
           lastSpeedTickMs = now;
           updateSpeed(dtMs);
 
-          // advance
           good.y += good.vy;
           bad.y += bad.vy;
 
-          // bottom edge & scoring
           if (good.y >= H - good.h) {
             good.y = H - good.h;
             score -= 1;
@@ -176,7 +146,6 @@
             resetBad();
           }
 
-          // collisions
           if (aabbHit(good, player)) {
             score += 1;
             goodFallsCount++;
@@ -188,7 +157,6 @@
             resetBad();
           }
 
-          // draw
           drawWorld();
           drawHUD();
           this._score = score;
@@ -197,14 +165,12 @@
         }
 
         if (state === STATE_END) {
-          drawWorld();
-          drawEndScreen();
+          drawWorld(); // just stop updating, no overlay
           this._score = score;
           this._isOver = true;
         }
       };
 
-      // optional restart inside chore
       this.handleMousePressed = () => {
         if (state === STATE_END) {
           score = 0;

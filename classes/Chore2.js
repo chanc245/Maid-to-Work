@@ -161,22 +161,8 @@
         pix.pop();
 
         if (state === "end") {
-          // hide GIF if showing
           this._showGoatGif(false);
-
-          pix.push();
-          pix.fill(0, 200);
-          pix.rect(0, 0, 64, 64);
-          pix.fill(255);
-          pix.textAlign(LEFT, CENTER);
-          pix.textSize(16);
-          pix.text("END", 0, 22);
-          pix.textSize(8);
-          pix.text(`Score: ${score}`, 17, 36);
-          pix.text("Click to play again", 17, 50);
-          pix.textAlign(LEFT, TOP);
-          pix.pop();
-
+          // Removed overlay — nothing drawn here
           this._score = score;
           this._isOver = true;
           return;
