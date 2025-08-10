@@ -3,13 +3,17 @@
   // Paper sorting — uniform countdown handled by GameManager
   // Goat behavior:
   // - While holding (dragging) a BAD paper => mouth OPEN (even if not moving)
-  // - On correct BAD drop (left zone) => play GIF (ANIM) for GOAT_ANIM_MS, then back to static
-  // NOTE: Animated GIF is shown via a DOM <img> (createImg), not loadImage.
+  // - On correct BAD drop (top-left zone) => play GIF (ANIM) for GOAT_ANIM_MS, then back to static
+  // Drop zones:
+  //   BAD  zone: x in [0,26],  y in [0,26]
+  //   GOOD zone: x in [49,64], y in [0,64]
   window.Chore2 = class {
     constructor(shared) {
       this.shared = shared;
       this._isOver = false;
       this._score = 0;
+
+      this.usesCustomCursor = false; // we want the global ui_mouse
 
       // DOM gif element (created lazily on start)
       this._goatGifEl = null;
@@ -37,7 +41,7 @@
       // draggable item
       let item = null; // {x,y,w,h, kind:'good'|'bad', img, dragging, offsetX, offsetY}
 
-      // --- ensure DOM GIF exists (overlayed above canvas) ---
+      // --- ensure DOM GIF exists (overlay aligned with canvas) ---
       this._ensureGoatGifEl();
 
       function spawnItem() {
@@ -46,8 +50,8 @@
         const kind = roll < GOOD_RATE ? "good" : "bad";
         const img = kind === "good" ? random(c2GoodImgs) : random(c2BadImgs);
         item = {
-          x: 18,
-          y: 26,
+          x: 18, // starting position per your request
+          y: 28, // starting position per your request
           w: 30,
           h: 36,
           kind,
@@ -78,6 +82,7 @@
         if (state !== "playing" || !item || !item.dragging) return;
         const sx = (mouseX / width) * W,
           sy = (mouseY / height) * H;
+        // Constrain so it always stays within the 64x64 frame while dragging
         item.x = constrain(sx - item.offsetX, 0, W - item.w);
         item.y = constrain(sy - item.offsetY, 0, H - item.h);
         // Goat mouth logic handled per-frame so it stays open even if mouse pauses.
@@ -87,27 +92,25 @@
         if (state !== "playing" || !item || !item.dragging) return;
         item.dragging = false;
 
-        const centerX = item.x + item.w / 2;
+        const cx = item.x + item.w / 2;
+        const cy = item.y + item.h / 2;
 
-        // Correct GOOD (right zone)
-        if (item.kind === "good" && centerX >= 37) {
+        const inBadZone = cx >= 0 && cx <= 26 && cy >= 0 && cy <= 26;
+        const inGoodZone = cx >= 49 && cx <= 64 && cy >= 0 && cy <= 64;
+
+        if (item.kind === "good" && inGoodZone) {
           score += 1;
-          // goat stays static/open handled per-frame
-        }
-        // Correct BAD (left zone)
-        else if (item.kind === "bad" && centerX <= 27) {
+          spawnItem();
+        } else if (item.kind === "bad" && inBadZone) {
           score += 1;
           goatState = "anim";
-          goatAnimStart = millis(); // start GIF after drop
+          goatAnimStart = millis();
           this._showGoatGif(true);
-        }
-        // Wrong drop
-        else {
-          score -= 1;
+          spawnItem();
+        } else {
+          // wrong drop: no score change, leave paper where it is
           if (goatState !== "anim") goatState = "static";
         }
-
-        spawnItem();
       };
 
       // ---------------- Frame step ----------------
@@ -124,7 +127,7 @@
             this._showGoatGif(false);
           }
         } else {
-          // Keep mouth OPEN while holding a BAD paper
+          // Keep mouth OPEN while holding a BAD paper (even if not moving)
           if (item && item.dragging && item.kind === "bad") {
             goatState = "open";
           } else if (goatState !== "anim") {
@@ -145,7 +148,7 @@
         const timeLeft = max(0, 30 - floor((millis() - gameStartMs) / 1000));
         if (timeLeft <= 0) state = "end";
 
-        // Item
+        // Item (always stays within frame even after wrong drop because drag constrained it)
         if (item) pix.image(item.img, item.x, item.y, item.w, item.h);
 
         // HUD
@@ -153,7 +156,6 @@
         pix.fill(255);
         pix.textAlign(RIGHT, TOP);
         pix.textSize(8);
-
         pix.text(`${score}:score`, 48, 2);
         pix.text(`${timeLeft}s:time`, 52, 10);
         pix.pop();
@@ -212,6 +214,7 @@
       this._goatGifEl.position(0, 0);
       this._goatGifEl.style("pointer-events", "none");
       this._goatGifEl.style("image-rendering", "pixelated");
+      // Be sure your canvas has z-index:1 in setup if you want the frame above this
       this._goatGifEl.hide();
     }
 
