@@ -209,8 +209,8 @@
           pix.fill(255);
           pix.textAlign(LEFT, TOP);
           pix.textSize(8);
-          pix.text(`score: ${score}`, 17, 2);
-          pix.text(`time: ${timeLeft}s`, 17, 10);
+          pix.text(`clean:${score}`, 17, 2);
+          pix.text(`time:${timeLeft}s`, 17, 10);
           pix.pop();
         }
 

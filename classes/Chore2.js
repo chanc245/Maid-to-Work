@@ -156,8 +156,8 @@
         pix.fill(255);
         pix.textAlign(RIGHT, TOP);
         pix.textSize(8);
-        pix.text(`${score}:score`, 48, 2);
-        pix.text(`${timeLeft}s:time`, 52, 10);
+        pix.text(`${score}:sort`, 48, 2);
+        pix.text(`${timeLeft}s:time`, 53, 10);
         pix.pop();
 
         if (state === "end") {
