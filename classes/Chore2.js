@@ -46,14 +46,27 @@
       // --- ensure DOM GIF exists (overlay aligned with canvas) ---
       this._ensureGoatGifEl();
 
+      let lastImg = null;
+
       function spawnItem() {
         const total = max(1, GOOD_RATE + BAD_RATE);
         const roll = random(0, total);
         const kind = roll < GOOD_RATE ? "good" : "bad";
-        const img = kind === "good" ? random(c2GoodImgs) : random(c2BadImgs);
+        const imgArray = kind === "good" ? c2GoodImgs : c2BadImgs;
+
+        // pick a different image than lastImg
+        let img;
+        if (imgArray.length > 1) {
+          do {
+            img = random(imgArray);
+          } while (img === lastImg);
+        } else {
+          img = imgArray[0];
+        }
+
         item = {
-          x: 18, // starting position
-          y: 26, // starting position
+          x: 18,
+          y: 26,
           w: 30,
           h: 36,
           kind,
@@ -62,6 +75,8 @@
           offsetX: 0,
           offsetY: 0,
         };
+
+        lastImg = img; // remember last exact image for next spawn
       }
       spawnItem();
 
