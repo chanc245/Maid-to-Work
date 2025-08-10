@@ -12,19 +12,26 @@
         H = this.shared.H,
         pix = this.shared.pix;
 
+      // knobs
       let SPEED_RATE = cfg.fallSpeedMultiplier;
       const SPEED_PERIOD_MS = 10000;
       let BLOOD_PER_20 = cfg.bloodItemFrequency;
-      let GOOD_FALL_LIMIT = cfg.maxGoodItemsPerRound;
+      const ROUND_TIME_LIMIT_SEC = Math.max(
+        1,
+        Math.floor(cfg.roundTimeLimitSec ?? 30)
+      ); // NEW
 
+      // states
       const STATE_PLAYING = 1,
         STATE_END = 2;
       let state = STATE_PLAYING;
       let score = 0;
-      let goodFallsCount = 0;
 
+      // timer (time-only end condition)
+      const gameStartMs = millis();
+
+      // player & items
       let player = { w: 20, h: 20, x: 17, y: H - 20, speed: 2.5 };
-
       let good = {
         x: 24,
         y: -16,
@@ -36,6 +43,7 @@
       };
       let bad = { x: 8, y: -16, w: 16, h: 16, baseVy: 0.4, vy: 0.7, img: null };
 
+      // speed
       let speedMult = 1.0;
       let lastSpeedTickMs = millis();
 
@@ -62,8 +70,7 @@
 
       function chooseBadSprite() {
         const pBlood = constrain(BLOOD_PER_20 / 20, 0, 1);
-        if (random() < pBlood) return random(c1BloodImgs);
-        return random(c1BadImgs);
+        return random() < pBlood ? random(c1BloodImgs) : random(c1BadImgs);
       }
 
       function resetGood() {
@@ -91,11 +98,13 @@
       function drawWorld() {
         pix.image(bg_chore1, 0, 0, 64, 64);
 
+        // paddle by mouse
         player.x = floor(
           constrain((mouseX / width) * W - player.w / 2, 0, W - player.w)
         );
         pix.image(item_pot, player.x, player.y, player.w, player.h);
 
+        // items
         pix.image(
           good.img,
           floor(constrain(good.x, 0, W - good.w)),
@@ -112,74 +121,85 @@
         );
       }
 
-      function drawHUD() {
+      function drawHUD(timeLeftSec) {
         pix.push();
         pix.fill(255);
         pix.textAlign(LEFT, TOP);
         pix.textSize(8);
-        pix.text(`food: ${score}`, 17, 2);
+        pix.text(`score: ${score}`, 17, 2);
+        pix.text(`time: ${timeLeftSec}s`, 17, 10);
         pix.pop();
       }
 
+      // initial spawn
       resetGood();
       resetBad();
 
       this._step = () => {
+        // compute HUD time-left
+        const elapsedSec = floor((millis() - gameStartMs) / 1000);
+        const timeLeft = max(0, ROUND_TIME_LIMIT_SEC - elapsedSec);
+
         if (state === STATE_PLAYING) {
-          const now = millis();
-          const dtMs = now - lastSpeedTickMs;
-          lastSpeedTickMs = now;
-          updateSpeed(dtMs);
+          // time-only end condition
+          if (timeLeft <= 0) {
+            state = STATE_END;
+          } else {
+            // speed progression
+            const now = millis();
+            const dtMs = now - lastSpeedTickMs;
+            lastSpeedTickMs = now;
+            updateSpeed(dtMs);
 
-          good.y += good.vy;
-          bad.y += bad.vy;
+            // advance
+            good.y += good.vy;
+            bad.y += bad.vy;
 
-          if (good.y >= H - good.h) {
-            good.y = H - good.h;
-            score -= 1;
-            goodFallsCount++;
-            if (goodFallsCount >= GOOD_FALL_LIMIT) state = STATE_END;
-            else resetGood();
-          }
-          if (bad.y >= H - bad.h) {
-            bad.y = H - bad.h;
-            resetBad();
-          }
+            // bottom edge handling
+            if (good.y >= H - good.h) {
+              good.y = H - good.h;
+              score -= 1; // missed good: -1
+              resetGood();
+            }
+            if (bad.y >= H - bad.h) {
+              bad.y = H - bad.h;
+              resetBad(); // missing bad: no score change
+            }
 
-          if (aabbHit(good, player)) {
-            score += 1;
-            goodFallsCount++;
-            if (goodFallsCount >= GOOD_FALL_LIMIT) state = STATE_END;
-            else resetGood();
-          }
-          if (aabbHit(bad, player)) {
-            score -= 1;
-            resetBad();
+            // collisions
+            if (aabbHit(good, player)) {
+              score += 1; // caught good: +1
+              resetGood();
+            }
+            if (aabbHit(bad, player)) {
+              score -= 1; // caught bad/blood: -1
+              resetBad();
+            }
           }
 
           drawWorld();
-          drawHUD();
+          drawHUD(timeLeft);
           this._score = score;
-          this._isOver = false;
+          this._isOver = state === STATE_END;
           return;
         }
 
         if (state === STATE_END) {
-          drawWorld(); // just stop updating, no overlay
+          drawWorld();
+          drawHUD(0);
           this._score = score;
           this._isOver = true;
         }
       };
 
+      // optional internal replay
       this.handleMousePressed = () => {
         if (state === STATE_END) {
           score = 0;
-          goodFallsCount = 0;
           speedMult = 1.0;
           lastSpeedTickMs = millis();
-          state = STATE_PLAYING;
-          resetGood();
-          resetBad();
+          // restart timer by re-calling start is simplest in your manager,
+          // but keep a soft reset here if needed.
         }
       };
     }

@@ -30,6 +30,24 @@
     GAME_END: "GAME_END",
   };
 
+  function _drawCountdownOverlay(pix, W, H, step, word) {
+    pix.push();
+    pix.noStroke();
+    pix.fill(0, 180);
+    pix.rect(0, 0, W, H);
+
+    pix.fill(255, 200);
+    pix.textAlign(CENTER, CENTER);
+    if (step >= 4) {
+      pix.textSize(16);
+      pix.text(word, W / 2, H / 2);
+    } else {
+      pix.textSize(32);
+      pix.text(`${Math.max(0, step)}`, W / 2, H / 2);
+    }
+    pix.pop();
+  }
+
   window.GameManager = class {
     constructor(shared) {
       this.pix = shared.pix;
@@ -328,10 +346,11 @@
           const left = Math.ceil(
             (this.countdownMs - (millis() - this.countdownStart)) / 1000
           );
+          const step = Math.max(0, left);
           const label = ["catch!", "scrub!", "sort!"][
             this._whichChoreIndexForHUD()
           ];
-          drawCountdownShared(this.pix, 64, 64, Math.max(0, left), label);
+          _drawCountdownOverlay(this.pix, this.W, this.H, step, label);
           break;
         }
         case S.PLAYING: {
