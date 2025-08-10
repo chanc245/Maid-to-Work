@@ -1,12 +1,17 @@
 // classes/Chore3.js
 (function () {
-  // Scrub the clothes — no internal countdown; timer starts after dress enters
+  // Scrub the clothes — no internal countdown; the round timer starts
+  // only after the dress finishes entering and is ready to scrub.
+  //
+  // Config (from DIFFICULTY):
+  //   stainCount, stainFadePerFrame, roundTimeLimitSec, bloodSmugPercent
+
   window.Chore3 = class {
     constructor(shared) {
       this.shared = shared;
       this._isOver = false;
       this._score = 0;
-      this.usesCustomCursor = true;
+      this.usesCustomCursor = true; // show sponge cursor
     }
 
     start(cfg) {
@@ -15,23 +20,28 @@
         pix = this.shared.pix;
       const self = this;
 
-      // knobs
-      let STAIN_COUNT = cfg.stainCount;
-      let STAIN_FADE_PER_FRAME = cfg.stainFadePerFrame;
-      let ROUND_TIME_LIMIT_SEC = cfg.roundTimeLimitSec;
-      let BLOOD_SMUG_RATE = constrain(cfg.bloodSmugRate ?? 0, 0, 1); // NEW: 0..1
+      // ---- knobs ----
+      const STAIN_COUNT = Math.max(0, cfg.stainCount | 0);
+      const STAIN_FADE_PER_FRAME = cfg.stainFadePerFrame ?? 3;
+      const ROUND_TIME_LIMIT_SEC = Math.max(
+        1,
+        Math.floor(cfg.roundTimeLimitSec ?? 30)
+      );
+      const BLOOD_SMUG_PERCENT = Math.max(
+        0,
+        Math.min(100, cfg.bloodSmugPercent ?? 0)
+      );
 
       // layout
-      let dx = 10,
+      const dx = 10,
         dw = 45,
         dh = 45;
-      let targetDy = 16;
+      const targetDy = 16;
       let dressY = 80;
-      let dressSpeed = 1.5;
+      const dressSpeed = 1.5;
       let dressState = "entering"; // "entering" -> "waiting"
 
-      // round state (timer arms only after dress is ready)
-      let gameStarted = true;
+      // round state (timer arms only after dress hits "waiting")
       let gameEnded = false;
       let gameStartTime = 0;
       let timerStarted = false;
@@ -45,40 +55,17 @@
       darkLayer.noSmooth();
 
       // stains
-      let clothesBound = 20;
-      /** spots: { x, y, opacity, img } */
+      const clothesBound = 20;
       let spotOffsets = [];
-
-      function pickSmudgeImage() {
-        // Choose between normal and blood based on BLOOD_SMUG_RATE
-        if (
-          random() < BLOOD_SMUG_RATE &&
-          typeof item_bloodSmug !== "undefined"
-        ) {
-          return item_bloodSmug;
-        }
-        return item_smug;
-      }
-
       function resetStains() {
         spotOffsets = [];
         for (let i = 0; i < STAIN_COUNT; i++) {
           const offsetX = random(-clothesBound / 2, clothesBound / 2);
           const offsetY = random(-clothesBound / 2, clothesBound / 2);
-
-          // decide blood vs normal
-          const isBlood = random() < (cfg.bloodSmugRate ?? 0);
-          const img =
-            isBlood && typeof item_bloodSmug !== "undefined"
-              ? item_bloodSmug
-              : item_smug;
-
           spotOffsets.push({
             x: offsetX + dw / 2,
             y: offsetY + dh / 2,
-            opacity: 100, // 0..255 as you decrement
-            kind: isBlood ? "blood" : "normal",
-            img,
+            opacity: 100,
           });
         }
       }
@@ -93,28 +80,22 @@
         dressState = "entering";
         currentDressImg = random(clothesImgs);
         resetStains();
-        // timer keeps running during the round; we do NOT reset it here
+        // Timer keeps running across dresses; we do NOT reset it here.
       }
 
-      // allow replay if user clicks on end screen
+      // optional replay if you ever use it
       this.handleMousePressed = () => {
-        if (gameEnded) {
-          score = 0;
-          gameEnded = false;
-          gameStarted = true;
-          gameStartTime = 0;
-          timerStarted = false; // will arm again when dress hits "waiting"
-          showSuccess = false;
-          resetDress();
-        }
+        // (no end overlay right now, so nothing here)
       };
 
       // ------------- frame step -------------
       const step = () => {
         // background
+        pix.push();
         pix.image(bg_chore3_river, 0, 0, 64, 64);
+        pix.pop();
 
-        // arm timer only once the dress is ready to scrub
+        // Arm timer only once the dress is ready to scrub
         if (!timerStarted && dressState === "waiting") {
           gameStartTime = millis();
           timerStarted = true;
@@ -122,30 +103,26 @@
 
         // timer
         let timeLeft = ROUND_TIME_LIMIT_SEC;
-        if (gameStarted && !gameEnded) {
-          if (timerStarted) {
-            const elapsed = (millis() - gameStartTime) / 1000;
-            timeLeft = max(0, ROUND_TIME_LIMIT_SEC - floor(elapsed));
-            if (timeLeft <= 0) {
-              gameEnded = true;
-              gameStarted = false;
-            }
+        if (!gameEnded && timerStarted) {
+          const elapsed = (millis() - gameStartTime) / 1000;
+          timeLeft = max(0, ROUND_TIME_LIMIT_SEC - floor(elapsed));
+          if (timeLeft <= 0) {
+            gameEnded = true;
           }
         }
 
         // dress entrance animation
-        if (dressState === "entering") {
+        if (!gameEnded && dressState === "entering") {
           if (dressY > targetDy) {
             dressY -= dressSpeed;
             if (dressY <= targetDy) {
               dressY = targetDy;
-              dressState = "waiting";
-              // timer will arm next frame
+              dressState = "waiting"; // timer arms next frame
             }
           }
         }
 
-        if (dressState !== "hidden" && !gameEnded) {
+        if (!gameEnded && dressState !== "hidden") {
           // build stain mask
           dressLayer.clear();
           darkLayer.clear();
@@ -164,27 +141,22 @@
             const my = (mouseY / height) * H;
             const d = dist(mx, my, spotX, spotY);
 
-            if (
-              d < hoverDist &&
-              gameStarted &&
-              dressState === "waiting" &&
-              !showSuccess
-            ) {
+            if (d < hoverDist && dressState === "waiting" && !showSuccess) {
               spot.opacity = max(0, spot.opacity - STAIN_FADE_PER_FRAME);
             }
             if (spot.opacity > 0) allFaded = false;
 
+            // choose smug image by percent (blood vs normal)
+            const useBlood = random(0, 100) < BLOOD_SMUG_PERCENT;
+            const smugImg =
+              useBlood && typeof item_bloodSmug !== "undefined"
+                ? item_bloodSmug
+                : item_smug;
+
             darkLayer.push();
-            // Normal stains: black; Blood stains: red
-            if (spot.kind === "blood") {
-              // red with alpha
-              darkLayer.tint(200, 0, 0, spot.opacity);
-            } else {
-              // black with alpha
-              darkLayer.tint(0, 0, 0, spot.opacity);
-            }
+            darkLayer.tint(0, spot.opacity);
             darkLayer.image(
-              spot.img, // use the chosen sprite
+              smugImg,
               spotX - smugSize / 2,
               spotY - smugSize / 2,
               smugSize,
@@ -205,12 +177,7 @@
           pix.image(dressLayer, 0, 0);
 
           // success check
-          if (
-            allFaded &&
-            dressState === "waiting" &&
-            !gameEnded &&
-            !showSuccess
-          ) {
+          if (allFaded && dressState === "waiting" && !showSuccess) {
             score++;
             showSuccess = true;
             successFeedbackTimer = millis();
@@ -241,23 +208,11 @@
           pix.textAlign(LEFT, TOP);
           pix.textSize(8);
           pix.text(`clean:${score}`, 17, 2);
-          pix.text(
-            `time:${
-              timerStarted
-                ? max(
-                    0,
-                    ROUND_TIME_LIMIT_SEC -
-                      floor((millis() - gameStartTime) / 1000)
-                  )
-                : ROUND_TIME_LIMIT_SEC
-            }s`,
-            17,
-            10
-          );
+          pix.text(`time:${timeLeft}s`, 17, 10);
           pix.pop();
         }
 
-        // sponge cursor (on top)
+        // sponge cursor (always on top here)
         pix.image(
           item_sponge,
           (mouseX / width) * W - 8,
@@ -277,12 +232,14 @@
     draw(_) {
       if (this._step) this._step();
     }
+
     isOver() {
       return this._isOver;
     }
     getScoreDelta() {
       return this._score;
     }
+
     handleMousePressed() {}
     handleMouseDragged() {}
     handleMouseReleased() {}

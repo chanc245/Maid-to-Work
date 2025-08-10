@@ -15,7 +15,10 @@
       // knobs
       let SPEED_RATE = cfg.fallSpeedMultiplier;
       const SPEED_PERIOD_MS = 10000;
-      let BLOOD_PER_20 = cfg.bloodItemFrequency;
+      const BAD_BLOOD_PERCENT = Math.max(
+        0,
+        Math.min(100, cfg.badBloodPercent ?? 0)
+      );
       const ROUND_TIME_LIMIT_SEC = Math.max(
         1,
         Math.floor(cfg.roundTimeLimitSec ?? 30)
@@ -70,7 +73,7 @@
       }
 
       function chooseBadSprite() {
-        const pBlood = constrain(BLOOD_PER_20 / 20, 0, 1);
+        const pBlood = BAD_BLOOD_PERCENT / 100;
         return random() < pBlood ? random(c1BloodImgs) : random(c1BadImgs);
       }
 

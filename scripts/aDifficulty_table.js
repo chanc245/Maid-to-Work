@@ -1,62 +1,74 @@
-// Difficulty across 3 days
+// scripts/aDifficulty_table.js
 const DAYS = 3;
 
 const DIFFICULTY = [
   {
     chore1: {
+      roundTimeLimitSec: 30,
+
       fallSpeedMultiplier: 1.1,
-      bloodItemFrequency: 1,
-      roundTimeLimitSec: 30,
+      badBloodPercent: 1, // % of BAD that are blood
     },
     chore2: {
-      goodSpawnPercent: 60,
-      badSpawnPercent: 40,
-      badBloodPercent: 50,
+      roundTimeLimitSec: 30,
       goatAnimationDurationMs: 800,
+
+      goodSpawnPercent: 50, // % of all spawns that are GOOD
+      badSpawnPercent: 50, // % of all spawns that are BAD
+      badBloodPercent: 1, // % of BAD that are blood
     },
     chore3: {
+      roundTimeLimitSec: 30,
+
       stainCount: 3,
-      stainFadePerFrame: 3,
-      roundTimeLimitSec: 30,
-      bloodSmugRate: 0.01,
+      stainFadePerFrame: 6,
+      bloodSmugPercent: 1,
     },
   },
   {
     chore1: {
+      roundTimeLimitSec: 20,
+
       fallSpeedMultiplier: 1.25,
-      bloodItemFrequency: 3,
-      roundTimeLimitSec: 28, // example harder: less time
+      badBloodPercent: 15,
     },
     chore2: {
-      goodSpawnPercent: 60,
-      badSpawnPercent: 40,
-      badBloodPercent: 70,
+      roundTimeLimitSec: 20,
       goatAnimationDurationMs: 800,
+
+      goodSpawnPercent: 50,
+      badSpawnPercent: 50,
+      badBloodPercent: 30,
     },
     chore3: {
+      roundTimeLimitSec: 20,
+
       stainCount: 4,
-      stainFadePerFrame: 3.5,
-      roundTimeLimitSec: 28,
-      bloodSmugRate: 0.22,
-    }, // 22%
+      stainFadePerFrame: 5,
+      bloodSmugPercent: 50,
+    },
   },
   {
     chore1: {
+      roundTimeLimitSec: 15,
+
       fallSpeedMultiplier: 1.4,
-      bloodItemFrequency: 6,
-      roundTimeLimitSec: 26, // example harder: less time
+      badBloodPercent: 70,
     },
     chore2: {
-      goodSpawnPercent: 60,
-      badSpawnPercent: 40,
-      badBloodPercent: 50,
+      roundTimeLimitSec: 15,
       goatAnimationDurationMs: 800,
+
+      goodSpawnPercent: 30,
+      badSpawnPercent: 60,
+      badBloodPercent: 80,
     },
     chore3: {
-      stainCount: 5,
+      roundTimeLimitSec: 15,
+
+      stainCount: 4,
       stainFadePerFrame: 4,
-      roundTimeLimitSec: 26,
-      bloodSmugRate: 0.3,
-    }, // 30%
+      bloodSmugPercent: 80,
+    },
   },
 ];
