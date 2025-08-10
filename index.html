@@ -1,25 +1,38 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
+    <title>LowResJam 2025</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="preload"
+      href="assets/fonts/Pixel Millennium.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.3/p5.min.js"></script>
+    <!-- p5 -->
+    <script src="p5.min.js"></script>
+    <script src="p5.sound.min.js"></script>
 
-    <!-- Difficulty table & tiny shared helpers -->
+    <!-- Data / config -->
     <script src="scripts/aDifficulty_table.js"></script>
+    <script src="scripts/dialogScripts.js"></script>
+    <script src="scripts/uiHelpers.js"></script>
 
-    <!-- Chores (each is self-contained) -->
+    <!-- Systems -->
+    <script src="classes/Dialog.js"></script>
+    <script src="classes/EndingTrue.js"></script>
     <script src="classes/Chore1.js"></script>
     <script src="classes/Chore2.js"></script>
     <script src="classes/Chore3.js"></script>
     <script src="classes/GameManager.js"></script>
 
-    <!-- Optional: debug overlay -->
+    <!-- Main -->
     <script src="scripts/testing_Debug.js"></script>
-
-    <!-- Main sketch + GameManager -->
     <script src="sketch.js"></script>
   </body>
 </html>

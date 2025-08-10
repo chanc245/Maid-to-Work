@@ -1,10 +1,11 @@
 (function () {
-  // Catch the Good Food (falling items)
+  // Catch the Good Food (falling items) — countdown removed, p5 state isolated
   window.Chore1 = class {
     constructor(shared) {
       this.shared = shared; // { pix, W, H }
       this._isOver = false;
       this._score = 0;
+      this.usesCustomCursor = false;
     }
 
     start(cfg) {
@@ -12,17 +13,16 @@
         H = this.shared.H,
         pix = this.shared.pix;
 
-      // ---- config knobs (friendly names already mapped) ----
-      let SPEED_RATE = cfg.fallSpeedMultiplier; // exponential factor per SPEED_PERIOD_MS
-      const SPEED_PERIOD_MS = 10000; // unchanged
-      let BLOOD_PER_20 = cfg.bloodItemFrequency; // expected blood per 20 bad spawns
+      // ---- config knobs ----
+      let SPEED_RATE = cfg.fallSpeedMultiplier;
+      const SPEED_PERIOD_MS = 10000;
+      let BLOOD_PER_20 = cfg.bloodItemFrequency;
       let GOOD_FALL_LIMIT = cfg.maxGoodItemsPerRound;
 
       // ---- state ----
-      const STATE_COUNTDOWN = 0,
-        STATE_PLAYING = 1,
+      const STATE_PLAYING = 1,
         STATE_END = 2;
-      let state = STATE_COUNTDOWN;
+      let state = STATE_PLAYING;
       let score = 0;
       let goodFallsCount = 0;
 
@@ -41,8 +41,6 @@
       let bad = { x: 8, y: -16, w: 16, h: 16, baseVy: 0.4, vy: 0.7, img: null };
 
       // timers
-      const COUNTDOWN_SECS = 4;
-      let countdownStartMs = millis();
       let speedMult = 1.0;
       let lastSpeedTickMs = millis();
 
@@ -98,88 +96,64 @@
 
       function drawWorld() {
         pix.image(bg_chore1, 0, 0, 64, 64);
-        // input (mouse-controlled paddle)
-        const mx = constrain((mouseX / (W * 5)) * W * 5, 0, W * 5); // robust if SCALE changes
+
+        // mouse-controlled paddle
         player.x = floor(
           constrain((mouseX / width) * W - player.w / 2, 0, W - player.w)
         );
         pix.image(item_pot, player.x, player.y, player.w, player.h);
 
         // items
-        const gx = floor(constrain(good.x, 0, W - good.w));
-        const bx = floor(constrain(bad.x, 0, W - bad.w));
-        pix.image(good.img, gx, floor(good.y), good.w, good.h);
-        pix.image(bad.img, bx, floor(bad.y), bad.w, bad.h);
+        pix.image(
+          good.img,
+          floor(constrain(good.x, 0, W - good.w)),
+          floor(good.y),
+          good.w,
+          good.h
+        );
+        pix.image(
+          bad.img,
+          floor(constrain(bad.x, 0, W - bad.w)),
+          floor(bad.y),
+          bad.w,
+          bad.h
+        );
       }
 
       function drawHUD() {
         pix.push();
         pix.fill(255);
-        pix.textAlign(RIGHT, TOP);
+        pix.textAlign(LEFT, TOP);
         pix.textSize(8);
-        
-        pix.text(`${score}`, 0, 2);
-        
+        pix.text(`score: ${score}`, 17, 2);
         pix.pop();
       }
 
-      function drawCountdown(step, word) {
-        pix.fill(0, 180);
-        pix.rect(0, 0, W, H);
-        pix.fill(255);
-        pix.textAlign(CENTER, CENTER);
-        if (step === 4) {
-          pix.textSize(16);
-          pix.text(word, W / 2, H / 2);
-        } else {
-          pix.textSize(32);
-          pix.text(`${step}`, W / 2, H / 2);
-        }
-        pix.textAlign(LEFT, TOP);
-        pix.textSize(8);
-      }
-
       function drawEndScreen() {
+        pix.push();
         pix.fill(0, 200);
         pix.rect(0, 0, W, H);
+
         pix.fill(255);
         pix.textAlign(LEFT, CENTER);
         pix.textSize(16);
         pix.text("END", 0, H / 2 - 10);
+
         pix.textSize(8);
         pix.text(`Score: ${score}`, 0, H / 2 + 4);
         pix.text("Click to play again", 0, H / 2 + 18);
         pix.textAlign(LEFT, TOP);
-        pix.textSize(8);
+        pix.pop();
       }
 
-      // init
+      // init spawns
       resetGood();
       resetBad();
 
-      // per-frame step (called by manager.draw)
+      // per-frame step
       this._step = () => {
-        // background
-        pix.image(bg_chore1, 0, 0, 64, 64);
-
-        if (state === STATE_COUNTDOWN) {
-          drawWorld();
-          drawHUD();
-          const remaining = ceil(
-            COUNTDOWN_SECS - (millis() - countdownStartMs) / 1000
-          );
-          if (remaining > 0) {
-            drawCountdown(remaining, "catch!");
-          } else {
-            lastSpeedTickMs = millis();
-            state = STATE_PLAYING;
-          }
-          this._score = score;
-          this._isOver = false;
-          return;
-        }
-
         if (state === STATE_PLAYING) {
+          // speed progression
           const now = millis();
           const dtMs = now - lastSpeedTickMs;
           lastSpeedTickMs = now;
@@ -189,7 +163,7 @@
           good.y += good.vy;
           bad.y += bad.vy;
 
-          // bottom
+          // bottom edge & scoring
           if (good.y >= H - good.h) {
             good.y = H - good.h;
             score -= 1;
@@ -214,6 +188,7 @@
             resetBad();
           }
 
+          // draw
           drawWorld();
           drawHUD();
           this._score = score;
@@ -229,21 +204,18 @@
         }
       };
 
-      // clicks to restart inside chore (manager advances anyway, but keep parity)
+      // optional restart inside chore
       this.handleMousePressed = () => {
         if (state === STATE_END) {
-          // reset for replay, though manager will switch chore/day
           score = 0;
           goodFallsCount = 0;
           speedMult = 1.0;
-          countdownStartMs = millis();
-          state = STATE_COUNTDOWN;
+          lastSpeedTickMs = millis();
+          state = STATE_PLAYING;
           resetGood();
           resetBad();
         }
       };
-      this._getScore = () => score;
-      this._getState = () => state;
     }
 
     update(_) {}

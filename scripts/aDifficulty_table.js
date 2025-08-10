@@ -1,4 +1,5 @@
-// Difficulty across 3 days
+// scripts/aDifficulty_table.js
+
 const DAYS = 3;
 
 const DIFFICULTY = [
@@ -6,14 +7,14 @@ const DIFFICULTY = [
     chore1: {
       fallSpeedMultiplier: 1.1,
       bloodItemFrequency: 1,
-      maxGoodItemsPerRound: 20,
+      maxGoodItemsPerRound: 2,
     },
     chore2: {
       goodSpawnPercent: 60,
       badSpawnPercent: 40,
       goatAnimationDurationMs: 800,
     },
-    chore3: { stainCount: 3, stainFadePerFrame: 3, roundTimeLimitSec: 30 },
+    chore3: { stainCount: 3, stainFadePerFrame: 3, roundTimeLimitSec: 5 },
   },
   {
     chore1: {

@@ -1,10 +1,12 @@
+// classes/Chore3.js
 (function () {
-  // Scrub the clothes (erase stains by hovering near them)
+  // Scrub the clothes — no internal countdown; timer starts after dress enters
   window.Chore3 = class {
     constructor(shared) {
       this.shared = shared;
       this._isOver = false;
       this._score = 0;
+      this.usesCustomCursor = true;
     }
 
     start(cfg) {
@@ -13,30 +15,28 @@
         pix = this.shared.pix;
       const self = this;
 
-      let STAIN_COUNT = cfg.stainCount; // number of stains
-      let STAIN_FADE_PER_FRAME = cfg.stainFadePerFrame; // opacity drop per frame while hovered
+      // knobs
+      let STAIN_COUNT = cfg.stainCount;
+      let STAIN_FADE_PER_FRAME = cfg.stainFadePerFrame;
       let ROUND_TIME_LIMIT_SEC = cfg.roundTimeLimitSec;
 
       // layout
       let dx = 10,
         dw = 45,
         dh = 45;
-      let targetDy = 10;
+      let targetDy = 16;
       let dressY = 80;
       let dressSpeed = 1.5;
-      let dressState = "entering"; // entering → waiting
+      let dressState = "entering"; // "entering" -> "waiting"
 
-      // countdown + game
-      let countdownStep = 4;
-      let countdownTimer = millis();
-      let showCountdown = true;
-
-      let gameStarted = false;
+      // round state (timer arms only after dress is ready)
+      let gameStarted = true;
       let gameEnded = false;
       let gameStartTime = 0;
+      let timerStarted = false;
       let score = 0;
 
-      // clothes
+      // assets/layers
       let currentDressImg = random(clothesImgs);
       let dressLayer = createGraphics(W, H);
       let darkLayer = createGraphics(W, H);
@@ -60,7 +60,7 @@
       }
       resetStains();
 
-      // feedback ring
+      // success feedback ring
       let showSuccess = false;
       let successFeedbackTimer = 0;
 
@@ -69,67 +69,63 @@
         dressState = "entering";
         currentDressImg = random(clothesImgs);
         resetStains();
+        // timer keeps running during the round; we do NOT reset it here
       }
 
+      // allow replay if user clicks on end screen
       this.handleMousePressed = () => {
         if (gameEnded) {
-          // click to restart this chore if user lingers
           score = 0;
           gameEnded = false;
-          gameStarted = false;
+          gameStarted = true;
+          gameStartTime = 0;
+          timerStarted = false; // will arm again when dress hits "waiting"
           showSuccess = false;
-          countdownStep = 4;
-          countdownTimer = millis();
-          showCountdown = true;
           resetDress();
         }
       };
 
+      // ------------- frame step -------------
       const step = () => {
+        // background
         pix.image(bg_chore3_river, 0, 0, 64, 64);
 
-        // COUNTDOWN
-        if (showCountdown) {
-          if (millis() - countdownTimer > 1000) {
-            countdownStep--;
-            countdownTimer = millis();
-          }
-          drawCountdown(countdownStep, "scrub!");
-          if (countdownStep < 1) {
-            showCountdown = false;
-            dressState = "entering";
-            gameStartTime = millis();
-            gameStarted = true;
-          }
-          return finish(false);
+        // arm timer only once the dress is ready to scrub
+        if (!timerStarted && dressState === "waiting") {
+          gameStartTime = millis();
+          timerStarted = true;
         }
 
-        // Timer
-        let timeLeft = 0;
+        // timer
+        let timeLeft = ROUND_TIME_LIMIT_SEC;
         if (gameStarted && !gameEnded) {
-          const elapsed = (millis() - gameStartTime) / 1000;
-          timeLeft = max(0, ROUND_TIME_LIMIT_SEC - floor(elapsed));
-          if (timeLeft <= 0) {
-            gameEnded = true;
-            gameStarted = false;
+          if (timerStarted) {
+            const elapsed = (millis() - gameStartTime) / 1000;
+            timeLeft = max(0, ROUND_TIME_LIMIT_SEC - floor(elapsed));
+            if (timeLeft <= 0) {
+              gameEnded = true;
+              gameStarted = false;
+            }
           }
         }
 
-        // Animate dress entering
+        // dress entrance animation
         if (dressState === "entering") {
           if (dressY > targetDy) {
             dressY -= dressSpeed;
             if (dressY <= targetDy) {
               dressY = targetDy;
               dressState = "waiting";
+              // timer will arm next frame
             }
           }
         }
 
         if (dressState !== "hidden" && !gameEnded) {
-          // Draw dress & stains
+          // build stain mask
           dressLayer.clear();
           darkLayer.clear();
+
           dressLayer.image(currentDressImg, dx, dressY, dw, dh);
 
           const hoverDist = 5;
@@ -154,6 +150,7 @@
             }
             if (spot.opacity > 0) allFaded = false;
 
+            darkLayer.push();
             darkLayer.tint(0, spot.opacity);
             darkLayer.image(
               item_smug,
@@ -163,8 +160,10 @@
               smugSize
             );
             darkLayer.noTint();
+            darkLayer.pop();
           }
 
+          // mask stains inside the dress shape
           const ctx = darkLayer.drawingContext;
           ctx.save();
           ctx.globalCompositeOperation = "destination-in";
@@ -174,6 +173,7 @@
           dressLayer.image(darkLayer, 0, 0);
           pix.image(dressLayer, 0, 0);
 
+          // success check
           if (
             allFaded &&
             dressState === "waiting" &&
@@ -185,15 +185,17 @@
             successFeedbackTimer = millis();
           }
 
+          // success ring & advance to next dress
           if (showSuccess) {
+            pix.push();
             const centerX = dx + dw / 2,
               centerY = dressY + dh / 2;
-            pix.push();
             pix.noFill();
             pix.strokeWeight(5);
             pix.stroke(0, 230, 0);
             pix.ellipse(centerX, centerY, 40, 40);
             pix.pop();
+
             if (millis() - successFeedbackTimer >= 500) {
               showSuccess = false;
               resetDress();
@@ -202,9 +204,19 @@
         }
 
         // HUD
-        if (!gameEnded && !showCountdown) drawHUD(score, timeLeft);
+        if (!gameEnded) {
+          pix.push();
+          pix.fill(255);
+          pix.textAlign(LEFT, TOP);
+          pix.textSize(8);
+          pix.text(`score: ${score}`, 17, 2);
+          pix.text(`time: ${timeLeft}s`, 17, 10);
+          pix.pop();
+        }
 
+        // end overlay
         if (gameEnded) {
+          pix.push();
           pix.fill(0, 200);
           pix.rect(0, 0, W, H);
           pix.fill(255);
@@ -215,10 +227,10 @@
           pix.text(`Score: ${score}`, 0, H / 2 + 4);
           pix.text("Click to play again", 0, H / 2 + 18);
           pix.textAlign(LEFT, TOP);
-          pix.textSize(8);
+          pix.pop();
         }
 
-        // Sponge cursor
+        // sponge cursor (on top)
         pix.image(
           item_sponge,
           (mouseX / width) * W - 8,
@@ -227,39 +239,11 @@
           16
         );
 
-        return finish(gameEnded);
-
-        function drawCountdown(step, word) {
-          pix.fill(0, 180);
-          pix.rect(0, 0, W, H);
-          pix.fill(255);
-          pix.textAlign(CENTER, CENTER);
-          if (step === 4) {
-            pix.textSize(16);
-            pix.text(word, W / 2, H / 2);
-          } else {
-            pix.textSize(32);
-            pix.text(`${step}`, W / 2, H / 2);
-          }
-          pix.textAlign(LEFT, TOP);
-          pix.textSize(8);
-        }
-        function drawHUD(score, timeLeft) {
-          pix.fill(255);
-          pix.textAlign(LEFT, TOP);
-          pix.textSize(8);
-          pix.text(`Score: ${score}`, 2, 2);
-          pix.text(`Time: ${timeLeft}s`, 2, 10);
-        }
-        function finish(over) {
-          self._score = score;
-          self._isOver = !!over;
-        }
+        self._score = score;
+        self._isOver = !!gameEnded;
       };
 
       this._step = step;
-      this._getScore = () => score;
-      this._isOverFlag = () => gameEnded;
     }
 
     update(_) {}

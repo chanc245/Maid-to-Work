@@ -1,42 +1,6 @@
 // classes/Dialog.js
-(function () {
-  // --------------------------------------------------------------------------
-  // Dialog system (speaker-less) with structured lines:
-  //
-  // scripts/dialogScripts.js example:
-  //
-  // const DIALOGS = {
-  //   normal_ending: {
-  //     lines: [
-  //       { cg: "cg_endNormal1_happy",   text: "I perfectly finished all the chores!" },
-  //       { cg: "cg_endNormal2_doubt",   text: "Mmmm… but I feel like I’m missing something…" },
-  //       { cg: "cg_endNormal3_whatever",text: "Well I guess it’s fine since I’m the best maid now!" }
-  //     ],
-  //     endingCG: "assets/dialog/ending_normal.png" // optional, only for mode: "ending"
-  //   },
-  //
-  //   after_day3_true_prelude: {
-  //     lines: [
-  //       { cg: "cg_stairs_hint", text: "All chores are complete." },
-  //       { cg: "cg_stairs_hint", text: "Why do the stairs feel... colder?" },
-  //       { cg: "cg_stairs_hint", text: "..." }
-  //     ]
-  //   }
-  // };
-  //
-  // Usage:
-  //   In preload(): Dialog.preload();
-  //   const dlg = new Dialog({ pix, W:64, H:64, SCALE:5, font: pixelFont });
-  //   dlg.start({ id: "normal_ending", mode: "ending" }); // or mode: "normal"
-  //   // per frame:
-  //   dlg.update(deltaTime);
-  //   dlg.draw();
-  //   // input:
-  //   dlg.mousePressed(); dlg.keyPressed(key);
-  //
-  // Manager: while dlg.isOver() === false, keep showing the dialog; when true, advance.
-  // --------------------------------------------------------------------------
 
+(function () {
   // UI geometry (64×64 buffer)
   const UI = {
     // dialog box image (62×20) drawn at (1,43)
@@ -57,7 +21,7 @@
   // Behavior knobs
   const DEFAULTS = {
     typewriterCPS: 35, // characters per second
-    arrowBlinkMs: 550, // ▼ blink rate
+    arrowBlinkMs: 550, // > blink rate
   };
 
   // Cache CG images: key -> p5.Image (looked up under assets/dialog/<key>.png)
@@ -165,6 +129,7 @@
 
     draw() {
       const p = this.pix;
+      p.push();
       p.textFont?.(this.font);
       p.textSize(8);
       p.textAlign(LEFT, TOP);
@@ -221,6 +186,7 @@
           p.textAlign(LEFT, TOP);
         }
       }
+      p.pop();
     }
 
     // ---------- input ----------
