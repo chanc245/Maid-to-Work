@@ -1,11 +1,7 @@
 // classes/Chore3.js
 (function () {
-  // Scrub the clothes — no internal countdown; the round timer starts
-  // only after the dress finishes entering and is ready to scrub.
-  //
-  // Config (from DIFFICULTY):
-  //   stainCount, stainFadePerFrame, roundTimeLimitSec, bloodSmugPercent
-
+  // Scrub the clothes — round timer starts only after dress finishes entering.
+  // DIFFICULTY cfg expects: stainCount, stainFadePerFrame, roundTimeLimitSec, bloodSmugPercent (0–100)
   window.Chore3 = class {
     constructor(shared) {
       this.shared = shared;
@@ -30,7 +26,7 @@
       const BLOOD_SMUG_PERCENT = Math.max(
         0,
         Math.min(100, cfg.bloodSmugPercent ?? 0)
-      );
+      ); // 0..100
 
       // layout
       const dx = 10,
@@ -39,7 +35,7 @@
       const targetDy = 16;
       let dressY = 80;
       const dressSpeed = 1.5;
-      let dressState = "entering"; // "entering" -> "waiting"
+      let dressState = "entering"; // -> "waiting"
 
       // round state (timer arms only after dress hits "waiting")
       let gameEnded = false;
@@ -54,7 +50,7 @@
       dressLayer.noSmooth();
       darkLayer.noSmooth();
 
-      // stains
+      // stains; persist smug type per spot so it doesn't flicker
       const clothesBound = 20;
       let spotOffsets = [];
       function resetStains() {
@@ -62,10 +58,20 @@
         for (let i = 0; i < STAIN_COUNT; i++) {
           const offsetX = random(-clothesBound / 2, clothesBound / 2);
           const offsetY = random(-clothesBound / 2, clothesBound / 2);
+
+          // Decide the smug image ONCE for this spot
+          // in resetStains()
+          const useBlood =
+            random(0, 100) < BLOOD_SMUG_PERCENT &&
+            typeof item_bloodSmug !== "undefined";
+          const smugImg = useBlood ? item_bloodSmug : item_smug;
+
           spotOffsets.push({
             x: offsetX + dw / 2,
             y: offsetY + dh / 2,
             opacity: 100,
+            smugImg,
+            isBlood: useBlood, // <-- remember if this spot is blood
           });
         }
       }
@@ -79,21 +85,14 @@
         dressY = 80;
         dressState = "entering";
         currentDressImg = random(clothesImgs);
-        resetStains();
-        // Timer keeps running across dresses; we do NOT reset it here.
+        resetStains(); // new stains with their own fixed smug types
+        // Timer keeps running across dresses; do NOT reset it here.
       }
-
-      // optional replay if you ever use it
-      this.handleMousePressed = () => {
-        // (no end overlay right now, so nothing here)
-      };
 
       // ------------- frame step -------------
       const step = () => {
         // background
-        pix.push();
         pix.image(bg_chore3_river, 0, 0, 64, 64);
-        pix.pop();
 
         // Arm timer only once the dress is ready to scrub
         if (!timerStarted && dressState === "waiting") {
@@ -146,17 +145,17 @@
             }
             if (spot.opacity > 0) allFaded = false;
 
-            // choose smug image by percent (blood vs normal)
-            const useBlood = random(0, 100) < BLOOD_SMUG_PERCENT;
-            const smugImg =
-              useBlood && typeof item_bloodSmug !== "undefined"
-                ? item_bloodSmug
-                : item_smug;
-
+            // in the draw loop where you render each spot
             darkLayer.push();
-            darkLayer.tint(0, spot.opacity);
+            // Keep blood slightly red so it's visible; normal stays black.
+            // p5 tint(r,g,b,a)
+            if (spot.isBlood) {
+              darkLayer.tint(120, 0, 0, spot.opacity); // dark red with alpha
+            } else {
+              darkLayer.tint(0, 0, 0, spot.opacity); // pure black with alpha
+            }
             darkLayer.image(
-              smugImg,
+              spot.smugImg,
               spotX - smugSize / 2,
               spotY - smugSize / 2,
               smugSize,
@@ -239,7 +238,6 @@
     getScoreDelta() {
       return this._score;
     }
-
     handleMousePressed() {}
     handleMouseDragged() {}
     handleMouseReleased() {}

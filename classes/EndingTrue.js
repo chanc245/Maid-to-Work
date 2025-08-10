@@ -2,7 +2,7 @@
 
 (function () {
   const DEFAULTS = {
-    sceneRepeatTarget: 3,
+    sceneRepeatTarget: 2,
     webSize: 25,
     webPadding: 2,
     fadeInSpeed: 12,
@@ -103,18 +103,18 @@
           }
         }
       } else if (this.state === "end") {
-        pix.push();
-        pix.image(ASSETS.bgPng, 0, 0, W, H);
-        pix.fill(0, 200);
-        pix.rect(0, 0, W, H);
-        pix.fill(255);
-        pix.textAlign(CENTER, CENTER);
-        pix.textSize(12);
-        pix.text("TRUE END", W / 2, H / 2 - 6);
-        pix.textSize(8);
-        pix.text("Click to continue", W / 2, H / 2 + 8);
-        pix.textAlign(LEFT, TOP);
-        pix.pop();
+        // pix.push();
+        // pix.image(ASSETS.bgPng, 0, 0, W, H);
+        // pix.fill(0, 200);
+        // pix.rect(0, 0, W, H);
+        // pix.fill(255);
+        // pix.textAlign(CENTER, CENTER);
+        // pix.textSize(12);
+        // pix.text("TRUE END", W / 2, H / 2 - 6);
+        // pix.textSize(8);
+        // pix.text("Click to continue", W / 2, H / 2 + 8);
+        // pix.textAlign(LEFT, TOP);
+        // pix.pop();
       }
 
       // duster cursor on top

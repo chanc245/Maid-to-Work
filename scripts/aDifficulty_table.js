@@ -1,6 +1,11 @@
 // scripts/aDifficulty_table.js
 const DAYS = 3;
 
+const ENDING_SCORE_THRESHOLDS = {
+  trueEnd: 100, // min score for true ending
+  normalEnd: 50, // min score for normal ending
+};
+
 const DIFFICULTY = [
   {
     chore1: {

@@ -31,13 +31,16 @@ const DIALOGS = {
     ],
   },
 
-  dia_endTrue: {
+  dia_endTrue1: {
     lines: [
       { cg: "cg_endTrue1_noticeBasement", text: "Ah! I forgot to clean" },
       { cg: "cg_endTrue1_noticeBasement", text: "the basement!" },
       { cg: "cg_endTrue2_aMess", text: "What a mess! Looks like" },
       { cg: "cg_endTrue2_aMess", text: "this place needs some work!" },
-      // --- web cleaning game placeholder ---
+    ],
+  },
+  dia_endTrue2: {
+    lines: [
       { cg: "cg_endTrue3_stairEnd", text: "What awaited me at" },
       { cg: "cg_endTrue3_stairEnd", text: "the end of the basement was…" },
       { cg: "cg_endTrue4_spider", text: "A mysterious spider!" },
