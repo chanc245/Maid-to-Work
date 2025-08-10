@@ -51,7 +51,7 @@
         const img = kind === "good" ? random(c2GoodImgs) : random(c2BadImgs);
         item = {
           x: 18, // starting position per your request
-          y: 28, // starting position per your request
+          y: 26, // starting position per your request
           w: 30,
           h: 36,
           kind,
