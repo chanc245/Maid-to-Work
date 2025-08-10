@@ -25,14 +25,16 @@
         H = this.shared.H,
         pix = this.shared.pix;
 
-      let GOOD_RATE = cfg.goodSpawnPercent; // %
-      let BAD_RATE = cfg.badSpawnPercent; // %
-      let GOAT_ANIM_MS = cfg.goatAnimationDurationMs;
+      const GOOD_RATE = cfg.goodSpawnPercent; // %
+      const BAD_RATE = cfg.badSpawnPercent; // %
+      const GOAT_ANIM_MS = cfg.goatAnimationDurationMs;
 
       let score = 0;
-      let state = "playing"; // start directly
-      const GAME_DURATION_MS = 30 * 1000;
-      let gameStartMs = millis();
+      let state = "playing"; // manager shows countdown; we start right after
+
+      // ---- Timer: arm on first frame, not here ----
+      let timerArmed = false;
+      let gameStartMs = 0;
 
       // goat: 'static' | 'open' | 'anim'
       let goatState = "static";
@@ -50,8 +52,8 @@
         const kind = roll < GOOD_RATE ? "good" : "bad";
         const img = kind === "good" ? random(c2GoodImgs) : random(c2BadImgs);
         item = {
-          x: 18, // starting position per your request
-          y: 26, // starting position per your request
+          x: 18, // starting position
+          y: 26, // starting position
           w: 30,
           h: 36,
           kind,
@@ -85,7 +87,7 @@
         // Constrain so it always stays within the 64x64 frame while dragging
         item.x = constrain(sx - item.offsetX, 0, W - item.w);
         item.y = constrain(sy - item.offsetY, 0, H - item.h);
-        // Goat mouth logic handled per-frame so it stays open even if mouse pauses.
+        // Goat mouth state is computed per-frame so it stays open even if mouse pauses.
       };
 
       this.handleMouseReleased = () => {
@@ -105,7 +107,7 @@
           score += 1;
           goatState = "anim";
           goatAnimStart = millis();
-          this._showGoatGif(true);
+          this._showGoatGif(true); // show DOM GIF
           spawnItem();
         } else {
           // wrong drop: no score change, leave paper where it is
@@ -115,6 +117,12 @@
 
       // ---------------- Frame step ----------------
       const step = () => {
+        // Arm the timer on the first frame (after global countdown)
+        if (!timerArmed) {
+          timerArmed = true;
+          gameStartMs = millis();
+        }
+
         // background & paper strip
         pix.image(bg_chore2_table, 0, 0, 64, 64);
         pix.image(bg_chore_paper, 51, 7, 13, 64);
@@ -148,7 +156,7 @@
         const timeLeft = max(0, 30 - floor((millis() - gameStartMs) / 1000));
         if (timeLeft <= 0) state = "end";
 
-        // Item (always stays within frame even after wrong drop because drag constrained it)
+        // Item (always constrained to frame while dragging)
         if (item) pix.image(item.img, item.x, item.y, item.w, item.h);
 
         // HUD
@@ -162,7 +170,6 @@
 
         if (state === "end") {
           this._showGoatGif(false);
-          // Removed overlay — nothing drawn here
           this._score = score;
           this._isOver = true;
           return;

@@ -19,7 +19,7 @@
       const ROUND_TIME_LIMIT_SEC = Math.max(
         1,
         Math.floor(cfg.roundTimeLimitSec ?? 30)
-      ); // NEW
+      );
 
       // states
       const STATE_PLAYING = 1,
@@ -27,8 +27,9 @@
       let state = STATE_PLAYING;
       let score = 0;
 
-      // timer (time-only end condition)
-      const gameStartMs = millis();
+      // timer: arm on first frame (so the manager’s countdown doesn’t eat time)
+      let timerArmed = false;
+      let gameStartMs = 0;
 
       // player & items
       let player = { w: 20, h: 20, x: 17, y: H - 20, speed: 2.5 };
@@ -79,7 +80,6 @@
         good.img = random(c1GoodImgs);
         good.vy = good.baseVy * speedMult;
       }
-
       function resetBad() {
         bad.x = pickNonOverlappingX(bad.w, good.x);
         bad.y = -bad.h;
@@ -126,7 +126,7 @@
         pix.fill(255);
         pix.textAlign(LEFT, TOP);
         pix.textSize(8);
-        pix.text(`score: ${score}`, 17, 2);
+        pix.text(`food: ${score}`, 17, 2);
         pix.text(`time: ${timeLeftSec}s`, 17, 10);
         pix.pop();
       }
@@ -136,12 +136,19 @@
       resetBad();
 
       this._step = () => {
+        // Arm timer the first time we actually render the chore (i.e., after manager countdown)
+        if (!timerArmed) {
+          timerArmed = true;
+          gameStartMs = millis();
+          lastSpeedTickMs = gameStartMs; // keep speed progression consistent
+        }
+
         // compute HUD time-left
         const elapsedSec = floor((millis() - gameStartMs) / 1000);
         const timeLeft = max(0, ROUND_TIME_LIMIT_SEC - elapsedSec);
 
         if (state === STATE_PLAYING) {
-          // time-only end condition
+          // end only when time runs out
           if (timeLeft <= 0) {
             state = STATE_END;
           } else {
@@ -163,7 +170,7 @@
             }
             if (bad.y >= H - bad.h) {
               bad.y = H - bad.h;
-              resetBad(); // missing bad: no score change
+              resetBad(); // missed bad: no score change
             }
 
             // collisions
@@ -192,14 +199,13 @@
         }
       };
 
-      // optional internal replay
+      // (optional) soft reset if you ever click inside the chore after end
       this.handleMousePressed = () => {
         if (state === STATE_END) {
           score = 0;
           speedMult = 1.0;
-          lastSpeedTickMs = millis();
-          // restart timer by re-calling start is simplest in your manager,
-          // but keep a soft reset here if needed.
+          timerArmed = false; // will re-arm on first frame again
+          // manager will usually start a new chore instance instead
         }
       };
     }
