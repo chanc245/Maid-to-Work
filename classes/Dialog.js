@@ -99,15 +99,24 @@
       // load ending CG if needed (only for mode "ending")
       this.endingCG = null;
       if (this.mode === "ending") {
-        // Prefer a preloaded image via key
-        if (
-          entry.endingCGKey &&
-          typeof window[entry.endingCGKey] !== "undefined"
-        ) {
-          this.endingCG = window[entry.endingCGKey];
-        } else if (entry.endingCG) {
-          // Fallback: path string (legacy)
-          this.endingCG = loadImage(entry.endingCG);
+        if (entry.endingCG) {
+          // Try to load from path; if it fails, fall back to key (if present)
+          this.endingCG = loadImage(
+            entry.endingCG,
+            () => {}, // success noop
+            () => {
+              if (this.endingCGKey && window[this.endingCGKey]) {
+                this.endingCG = window[this.endingCGKey];
+              } else {
+                console.warn(
+                  "[Dialog] endingCG failed to load and no valid endingCGKey fallback."
+                );
+              }
+            }
+          );
+        } else if (this.endingCGKey && window[this.endingCGKey]) {
+          // Directly use preloaded image by key
+          this.endingCG = window[this.endingCGKey];
         }
       }
       // set up the first line (including CG)

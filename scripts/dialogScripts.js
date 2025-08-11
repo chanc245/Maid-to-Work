@@ -19,7 +19,7 @@ const DIALOGS = {
       { cg: "cg_endNormal3_whatever", text: "Well I guess it’s fine since" },
       { cg: "cg_endNormal3_whatever", text: "I’m the best maid now!" },
     ],
-    endingCGKey: "cg_endNormal_ENDCARD",
+    endingCG: "assets/dialog/cg_endNormal_ENDCARD.png",
   },
 
   dia_endBad: {
@@ -29,7 +29,7 @@ const DIALOGS = {
       { cg: "cg_endBad2_kickOut", text: "I got kicked out of the mansion." },
       { cg: "cg_endBad2_kickOut", text: "I’ll never be the best maid..." },
     ],
-    endingCGKey: "cg_endBad_ENDCARD",
+    endingCG: "assets/dialog/cg_endBad_ENDCARD.png",
   },
 
   dia_endTrue1: {
@@ -53,6 +53,6 @@ const DIALOGS = {
       { cg: "cg_endTrue8_happySpider", text: "Being a perfect maid" },
       { cg: "cg_endTrue8_happySpider", text: "takes a lot of work!" },
     ],
-    endingCGKey: "cg_endTrue_ENDCARD",
+    endingCG: "assets/dialog/cg_endTrue_ENDCARD.png",
   },
 };

@@ -86,7 +86,6 @@
     pix.pop();
   }
 
-  // Map 1..3 to countdown label (D-3 -> D-1)
   function _displayDayFromInternalDay(n) {
     // Internal day: 1,2,3 -> display: 3,2,1
     return Math.max(1, DAYS - n + 1);
@@ -123,12 +122,11 @@
       ];
       this.activeChore = null;
 
-      // day change animation data (inlined, replaces external DayChangeAnim)
+      // inline day animation
       this._dayAnim = {
         active: false,
-        phase: "idle", // "slide" -> "wait"
+        phase: "idle", // "ready" -> "slide" -> "wait"
         holdTimer: 0,
-        // label config (do not use reserved name LABEL)
         cfg: {
           y: 1,
           xTarget: 15,
@@ -144,7 +142,7 @@
         toDay: 2,
       };
 
-      this.dayAnim = null; // (unused now, kept to avoid breaking elsewhere)
+      this.dayAnim = null; // legacy no-op
 
       this.steps = [];
       this.stepIndex = -1;
@@ -240,7 +238,6 @@
       addRTC(3, 3, 2);
 
       steps.push({ type: "ENDING_BRANCH" });
-
       return steps;
     }
 
@@ -302,7 +299,6 @@
     }
 
     _startDayAnim(fromDay, toDay) {
-      // Convert to display countdown labels
       const prevLabel = `D-${_displayDayFromInternalDay(fromDay)}`;
       const nextLabel = `D-${_displayDayFromInternalDay(toDay)}`;
 
@@ -310,7 +306,6 @@
       A.fromDay = fromDay;
       A.toDay = toDay;
 
-      // Prepare positions: prev centered (visible), next off-left (hidden)
       A.prev.text = prevLabel;
       A.prev.x = A.cfg.xTarget;
 
@@ -318,7 +313,7 @@
       A.next.x = A.cfg.offLeft;
 
       A.active = true;
-      A.phase = "ready"; // <— wait here until user clicks
+      A.phase = "ready"; // wait for click to start slide
       A.holdTimer = 0;
       A.arrowBlinkAnchor = millis();
 
@@ -361,7 +356,7 @@
 
       switch (this.state) {
         case S.COUNTDOWN: {
-          // Play tick when the displayed number changes (3,2,1)
+          // Play tick when displayed number changes (3,2,1)
           const leftInt = Math.ceil(
             (this.countdownMs - (now - this.countdownStart)) / 1000
           );
@@ -371,8 +366,6 @@
             }
             this._lastCountdownInt = leftInt;
           }
-
-          // Finish countdown -> start playing
           if (now - this.countdownStart >= this.countdownMs) {
             this.state = S.PLAYING;
           }
@@ -405,7 +398,7 @@
           if (this.endingTrue.isOver()) {
             if (this._pendingTrueDialog2) {
               this._pendingTrueDialog2 = false;
-              this.dialog.start({ id: DLG.endTrue2, mode: "normal" });
+              this.dialog.start({ id: DLG.endTrue2, mode: "ending" });
               this.state = S.DIALOG;
               this._pendingAfterDialog = () => {
                 this.state = S.GAME_END;
@@ -424,7 +417,6 @@
       if (!A.active) return;
 
       if (A.phase === "slide") {
-        // slide prev → out, next → in to target
         A.prev.x += A.cfg.vx;
         A.next.x += A.cfg.vx;
         if (A.next.x >= A.cfg.xTarget) A.next.x = A.cfg.xTarget;
@@ -432,13 +424,12 @@
         const prevGone = A.prev.x >= A.cfg.offRight;
         const nextAtTarget = A.next.x === A.cfg.xTarget;
         if (prevGone && nextAtTarget) {
-          // finished movement, wait for user click to advance
           A.phase = "wait";
           A.holdTimer = 0;
           A.arrowBlinkAnchor = millis();
         }
       }
-      // phase "wait": just idle; click handled in mousePressed()
+      // "ready" and "wait" are handled by click in mousePressed()
     }
 
     // -------- Draw --------
@@ -487,9 +478,8 @@
             choreNum,
             this.globalScore
           );
-          if (_arrowBlinkShow(this._reminderArrowBlinkAnchor)) {
+          if (_arrowBlinkShow(this._reminderArrowBlinkAnchor))
             _drawAdvanceArrow(this.pix);
-          }
           break;
         }
         case S.COUNTDOWN: {
@@ -546,10 +536,8 @@
       p.textAlign(LEFT, TOP);
 
       if (A.phase === "ready") {
-        // show only current day label centered
         p.text(A.prev.text, Math.round(A.prev.x), A.cfg.y);
       } else {
-        // slide phase or wait phase: draw both
         p.text(A.prev.text, Math.round(A.prev.x), A.cfg.y);
         p.text(A.next.text, Math.round(A.next.x), A.cfg.y);
       }
@@ -559,7 +547,7 @@
       p.textAlign(LEFT, TOP);
       p.text(`TOTAL SCORE:${this.globalScore}`, 3, 54);
 
-      // blink arrow in ready & wait phases
+      // blink arrow in ready & wait
       if (
         (A.phase === "ready" || A.phase === "wait") &&
         _arrowBlinkShow(A.arrowBlinkAnchor)
@@ -594,7 +582,6 @@
       this.pix.textSize(8);
       this.pix.textAlign(LEFT, TOP);
       this.pix.text(`TOTAL SCORE: ${s}`, 4, 45);
-      //   pix.textAlign(CENTER);
       this.pix.text(`[R] RESTART`, 4, 53);
       this.pix.pop();
     }
@@ -649,8 +636,35 @@
       else if (this.state === S.DIALOG) this.dialog.keyPressed(k);
       else if (this.state === S.TRUE_ENDING) this.endingTrue.keyPressed?.(k);
       else if (this.state === S.DAY_ANIM && this._dayAnim.phase === "wait") {
-        // also allow keyboard to advance on day anim wait
         if (k === " " || k === "Enter") this.mousePressed();
+      }
+
+      // DEBUG: jump to endcards
+      if (k === "1") {
+        console.log("[DEBUG] Jumping to Bad Ending");
+        this.startDialog("dia_endBad", "ending", true);
+        return;
+      }
+      if (k === "2") {
+        console.log("[DEBUG] Jumping to Normal Ending");
+        this.startDialog("dia_endNormal", "ending", true);
+        return;
+      }
+      if (k === "3") {
+        console.log("[DEBUG] Jumping to True Ending");
+        this.startDialog("dia_endTrue2", "ending", true);
+        return;
+      }
+    }
+
+    // helper for debug & general use
+    startDialog(dialogId, mode = "normal", endAfterIfEnding = false) {
+      this.dialog.start({ id: dialogId, mode });
+      this.state = S.DIALOG;
+      if (mode === "ending" && endAfterIfEnding) {
+        this._pendingAfterDialog = () => {
+          this.state = S.GAME_END;
+        };
       }
     }
   };

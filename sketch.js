@@ -58,7 +58,7 @@ function preload() {
 
   cg_endBad_ENDCARD = loadImage("assets/dialog/cg_endBad_ENDCARD.png");
   cg_endNormal_ENDCARD = loadImage("assets/dialog/cg_endNormal_ENDCARD.png");
-  cg_endTure_ENDCARD = loadImage("assets/dialog/cg_endTure_ENDCARD.png");
+  cg_endTrue_ENDCARD = loadImage("assets/dialog/cg_endTrue_ENDCARD.png");
 
   // ========= CHORE 1 assets =========
   bg_chore1 = loadImage("assets/chore1/bg_chore1_kitchen.png");
