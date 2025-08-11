@@ -267,6 +267,7 @@
     _startReminder(dayNum, dayTime) {
       this.reminder = { dayNum, dayTime };
       this.state = S.REMINDER;
+      if (window.SFX) SFX.playOnce("ui_nextDay");
     }
 
     _startChore(index, dayNum) {
@@ -464,6 +465,7 @@
 
     // ---------------- Input routing ----------------
     mousePressed() {
+      if (window.SFX) SFX.startBG();
       switch (this.state) {
         case S.IMAGE:
         case S.REMINDER:
@@ -473,6 +475,7 @@
           this.activeChore?.handleMousePressed?.();
           break;
         case S.DIALOG:
+          if (window.SFX) SFX.playOnce("text_advance");
           this.dialog.mousePressed();
           break;
         case S.TRUE_ENDING:

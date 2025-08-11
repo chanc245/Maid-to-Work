@@ -1,7 +1,11 @@
 // classes/Chore3.js
 (function () {
-  // Scrub the clothes — round timer starts only after dress finishes entering.
-  // DIFFICULTY cfg expects: stainCount, stainFadePerFrame, roundTimeLimitSec, bloodSmugPercent (0–100)
+  // Scrub the clothes — round timer starts only after the dress finishes entering.
+  // DIFFICULTY cfg expects:
+  //   - stainCount            (int)
+  //   - stainFadePerFrame     (number)
+  //   - roundTimeLimitSec     (int, seconds)
+  //   - bloodSmugPercent      (0..100)
   window.Chore3 = class {
     constructor(shared) {
       this.shared = shared;
@@ -43,6 +47,9 @@
       let timerStarted = false;
       let score = 0;
 
+      // SFX: once scrubbing starts on the current dress, keep looping until it's clean or round ends
+      let scrubLoopActive = false;
+
       // assets/layers
       let currentDressImg = random(clothesImgs);
       let dressLayer = createGraphics(W, H);
@@ -60,7 +67,6 @@
           const offsetY = random(-clothesBound / 2, clothesBound / 2);
 
           // Decide the smug image ONCE for this spot
-          // in resetStains()
           const useBlood =
             random(0, 100) < BLOOD_SMUG_PERCENT &&
             typeof item_bloodSmug !== "undefined";
@@ -71,7 +77,7 @@
             y: offsetY + dh / 2,
             opacity: 100,
             smugImg,
-            isBlood: useBlood, // <-- remember if this spot is blood
+            isBlood: useBlood,
           });
         }
       }
@@ -84,6 +90,8 @@
       function resetDress() {
         dressY = 80;
         dressState = "entering";
+        scrubLoopActive = false; // safety
+        if (window.SFX) SFX.stop("wash_scrub"); // safety
         currentDressImg = random(clothesImgs);
         resetStains(); // new stains with their own fixed smug types
         // Timer keeps running across dresses; do NOT reset it here.
@@ -107,6 +115,8 @@
           timeLeft = max(0, ROUND_TIME_LIMIT_SEC - floor(elapsed));
           if (timeLeft <= 0) {
             gameEnded = true;
+            if (window.SFX) SFX.stop("wash_scrub");
+            scrubLoopActive = false;
           }
         }
 
@@ -132,6 +142,9 @@
           const smugSize = 15;
           let allFaded = true;
 
+          // Did we scrub at least one spot this frame?
+          let scrubbedThisFrame = false;
+
           for (let spot of spotOffsets) {
             const spotX = dx + spot.x;
             const spotY = dressY + spot.y;
@@ -141,14 +154,14 @@
             const d = dist(mx, my, spotX, spotY);
 
             if (d < hoverDist && dressState === "waiting" && !showSuccess) {
+              const before = spot.opacity;
               spot.opacity = max(0, spot.opacity - STAIN_FADE_PER_FRAME);
+              if (spot.opacity < before) scrubbedThisFrame = true;
             }
             if (spot.opacity > 0) allFaded = false;
 
-            // in the draw loop where you render each spot
+            // draw each spot (tinted)
             darkLayer.push();
-            // Keep blood slightly red so it's visible; normal stays black.
-            // p5 tint(r,g,b,a)
             if (spot.isBlood) {
               darkLayer.tint(120, 0, 0, spot.opacity); // dark red with alpha
             } else {
@@ -163,6 +176,14 @@
             );
             darkLayer.noTint();
             darkLayer.pop();
+          }
+
+          // Start loop the FIRST time scrubbing happens for this dress
+          if (scrubbedThisFrame && !scrubLoopActive) {
+            if (window.SFX && !SFX.isPlaying("wash_scrub")) {
+              SFX.loop("wash_scrub");
+            }
+            scrubLoopActive = true;
           }
 
           // mask stains inside the dress shape
@@ -180,6 +201,10 @@
             score++;
             showSuccess = true;
             successFeedbackTimer = millis();
+
+            // stop scrub loop instantly on success
+            if (window.SFX) SFX.stop("wash_scrub");
+            scrubLoopActive = false;
           }
 
           // success ring & advance to next dress
@@ -238,6 +263,7 @@
     getScoreDelta() {
       return this._score;
     }
+
     handleMousePressed() {}
     handleMouseDragged() {}
     handleMouseReleased() {}

@@ -45,7 +45,16 @@
         vy: 0.6,
         img: null,
       };
-      let bad = { x: 8, y: -16, w: 16, h: 16, baseVy: 0.4, vy: 0.7, img: null };
+      let bad = {
+        x: 8,
+        y: -16,
+        w: 16,
+        h: 16,
+        baseVy: 0.4,
+        vy: 0.7,
+        img: null,
+        isBlood: false, // <--- track if this bad is a blood item
+      };
 
       // speed
       let speedMult = 1.0;
@@ -72,21 +81,20 @@
         return x;
       }
 
-      function chooseBadSprite() {
-        const pBlood = BAD_BLOOD_PERCENT / 100;
-        return random() < pBlood ? random(c1BloodImgs) : random(c1BadImgs);
-      }
-
       function resetGood() {
         good.x = pickNonOverlappingX(good.w, bad.x);
         good.y = -good.h;
         good.img = random(c1GoodImgs);
         good.vy = good.baseVy * speedMult;
       }
+
       function resetBad() {
         bad.x = pickNonOverlappingX(bad.w, good.x);
         bad.y = -bad.h;
-        bad.img = chooseBadSprite();
+        // decide blood vs regular now and remember it
+        const useBlood = random() < BAD_BLOOD_PERCENT / 100;
+        bad.isBlood = useBlood;
+        bad.img = useBlood ? random(c1BloodImgs) : random(c1BadImgs);
         bad.vy = bad.baseVy * speedMult;
       }
 
@@ -176,13 +184,18 @@
               resetBad(); // missed bad: no score change
             }
 
-            // collisions
+            // collisions (pot hits) + SFX
             if (aabbHit(good, player)) {
               score += 1; // caught good: +1
+              if (window.SFX) SFX.playOnce("food_good");
               resetGood();
             }
             if (aabbHit(bad, player)) {
               score -= 1; // caught bad/blood: -1
+              if (window.SFX) {
+                if (bad.isBlood) SFX.playOnce("food_blood");
+                else SFX.playOnce("food_bad");
+              }
               resetBad();
             }
           }

@@ -2,7 +2,7 @@
 
 const W = 64,
   H = 64,
-  SCALE = 10;
+  SCALE = 5;
 
 let pix, pixelFont, manager;
 
@@ -30,6 +30,8 @@ let ui_chore1_ex, ui_chore2_ex, ui_chore3_ex; // tutorial cards
 let ui_mouse; // default cursor image
 
 function preload() {
+  SFX.preload();
+
   pixelFont = loadFont("assets/fonts/Pixel Millennium.ttf");
 
   // Systems that have their own preloads (Dialog box + True Ending assets)

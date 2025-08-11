@@ -146,6 +146,7 @@
         // Score only if dropped into the correct zone
         if (item.kind === "good" && inGoodZone) {
           score += 1;
+          if (window.SFX) SFX.playOnce("paper_sort");
           spawnItem();
         } else if (
           (item.kind === "bad" || item.kind === "blood") &&
@@ -155,6 +156,7 @@
           goatState = "anim";
           goatAnimStart = millis();
           this._showGoatGif(true);
+          if (window.SFX) SFX.loop("paper_chew");
           spawnItem();
         } else {
           // wrong drop: no score change, leave it where it is
@@ -182,6 +184,7 @@
           if (millis() - goatAnimStart > GOAT_ANIM_MS) {
             goatState = "static";
             this._showGoatGif(false);
+            if (window.SFX) SFX.stop("paper_chew");
           }
         } else {
           // Keep mouth OPEN while holding ANY bad-type paper
@@ -228,6 +231,7 @@
 
         if (state === "end") {
           this._showGoatGif(false);
+          if (window.SFX) SFX.stop("paper_chew");
           this._score = score;
           this._isOver = true;
           return;
