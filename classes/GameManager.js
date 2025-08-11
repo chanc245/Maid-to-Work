@@ -386,6 +386,9 @@
             this.reminder.dayTime,
             this.globalScore
           );
+          console.log(
+            `Day:${this.reminder.dayNum}; TotalScore:${this.globalScore}`
+          );
           break;
         }
         case S.COUNTDOWN: {
@@ -436,6 +439,9 @@
     }
 
     _drawFinalSummary() {
+      console.log(
+        `Day:${this.reminder.dayNum}; TotalScore:${this.globalScore}`
+      );
       const s = this.globalScore;
       const { trueEnd, normalEnd } = _getThresholds();
 

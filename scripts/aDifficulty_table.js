@@ -9,13 +9,13 @@ const ENDING_SCORE_THRESHOLDS = {
 const DIFFICULTY = [
   {
     chore1: {
-      roundTimeLimitSec: 30,
+      roundTimeLimitSec: 20,
 
       fallSpeedMultiplier: 1.1,
       badBloodPercent: 1, // % of BAD that are blood
     },
     chore2: {
-      roundTimeLimitSec: 30,
+      roundTimeLimitSec: 20,
       goatAnimationDurationMs: 800,
 
       goodSpawnPercent: 50, // % of all spawns that are GOOD
@@ -23,7 +23,7 @@ const DIFFICULTY = [
       badBloodPercent: 1, // % of BAD that are blood
     },
     chore3: {
-      roundTimeLimitSec: 30,
+      roundTimeLimitSec: 20,
 
       stainCount: 3,
       stainFadePerFrame: 6,
@@ -32,13 +32,13 @@ const DIFFICULTY = [
   },
   {
     chore1: {
-      roundTimeLimitSec: 20,
+      roundTimeLimitSec: 15,
 
       fallSpeedMultiplier: 1.25,
       badBloodPercent: 15,
     },
     chore2: {
-      roundTimeLimitSec: 20,
+      roundTimeLimitSec: 15,
       goatAnimationDurationMs: 800,
 
       goodSpawnPercent: 50,
@@ -46,7 +46,7 @@ const DIFFICULTY = [
       badBloodPercent: 30,
     },
     chore3: {
-      roundTimeLimitSec: 20,
+      roundTimeLimitSec: 15,
 
       stainCount: 4,
       stainFadePerFrame: 5,
@@ -55,13 +55,13 @@ const DIFFICULTY = [
   },
   {
     chore1: {
-      roundTimeLimitSec: 15,
+      roundTimeLimitSec: 10,
 
       fallSpeedMultiplier: 1.4,
-      badBloodPercent: 70,
+      badBloodPercent: 80,
     },
     chore2: {
-      roundTimeLimitSec: 15,
+      roundTimeLimitSec: 10,
       goatAnimationDurationMs: 800,
 
       goodSpawnPercent: 30,
@@ -69,7 +69,7 @@ const DIFFICULTY = [
       badBloodPercent: 80,
     },
     chore3: {
-      roundTimeLimitSec: 15,
+      roundTimeLimitSec: 10,
 
       stainCount: 4,
       stainFadePerFrame: 4,

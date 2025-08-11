@@ -1,5 +1,4 @@
 // classes/EndingTrue.js
-
 (function () {
   const DEFAULTS = {
     sceneRepeatTarget: 2,
@@ -31,7 +30,7 @@
       this.shared = shared; // { pix, W, H, SCALE }
       this._isOver = false;
 
-      this.state = "cycle";
+      this.state = "cycle"; // "cycle" | "anim"
       this.cyclesRemaining = DEFAULTS.sceneRepeatTarget;
       this.cfg = { ...DEFAULTS };
 
@@ -86,6 +85,7 @@
           pix.noTint();
         }
 
+        // when all webs cleared, run the GIF once
         if (this.webs.length > 0 && !anyAlive) {
           this.state = "anim";
           this.animStartMs = millis();
@@ -99,22 +99,10 @@
           if (this.cyclesRemaining > 0) {
             this._startNewCycle();
           } else {
-            this.state = "end";
+            // ✅ finish immediately: no "end" state, signal GameManager to continue
+            this._isOver = true;
           }
         }
-      } else if (this.state === "end") {
-        // pix.push();
-        // pix.image(ASSETS.bgPng, 0, 0, W, H);
-        // pix.fill(0, 200);
-        // pix.rect(0, 0, W, H);
-        // pix.fill(255);
-        // pix.textAlign(CENTER, CENTER);
-        // pix.textSize(12);
-        // pix.text("TRUE END", W / 2, H / 2 - 6);
-        // pix.textSize(8);
-        // pix.text("Click to continue", W / 2, H / 2 + 8);
-        // pix.textAlign(LEFT, TOP);
-        // pix.pop();
       }
 
       // duster cursor on top
@@ -131,24 +119,20 @@
     }
 
     mousePressed() {
+      if (this.state !== "cycle") return;
+
       const { W, H } = this.shared;
+      const sx = (mouseX / width) * W;
+      const sy = (mouseY / height) * H;
+      const hitR = this.cfg.webSize * 0.5;
 
-      if (this.state === "cycle") {
-        const sx = (mouseX / width) * W;
-        const sy = (mouseY / height) * H;
-        const hitR = this.cfg.webSize * 0.5;
-
-        for (const w of this.webs) {
-          if (!w.alive) continue;
-          const d = dist(sx, sy, w.x, w.y);
-          if (d <= hitR) {
-            w.alive = false;
-            break;
-          }
+      for (const w of this.webs) {
+        if (!w.alive) continue;
+        const d = dist(sx, sy, w.x, w.y);
+        if (d <= hitR) {
+          w.alive = false;
+          break;
         }
-      } else if (this.state === "end") {
-        this._isOver = true;
-        this.stairGifEl?.hide();
       }
     }
     mouseDragged() {}
@@ -162,8 +146,9 @@
       return 0;
     }
 
+    // ---------- internals ----------
     _startNewCycle() {
-      const { W, H } = this.shared;
+      const { H } = this.shared;
       this.state = "cycle";
       this.stairGifEl?.hide();
 
@@ -188,6 +173,7 @@
         maxY = yMax - half;
       const minDist2 = Math.pow(this.cfg.webSize + this.cfg.webPadding, 2);
 
+      // edge-biased attempts
       for (
         let attempt = 0;
         attempt < Math.floor(maxAttempts * 0.6);
@@ -197,6 +183,7 @@
         const y = this._biasedEdgeCoord(minY, maxY);
         if (this._clearHere(x, y, existing, minDist2)) return { x, y };
       }
+      // uniform attempts
       for (
         let attempt = 0;
         attempt < Math.floor(maxAttempts * 0.4);
