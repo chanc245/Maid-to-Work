@@ -38,7 +38,7 @@
         dh = 45;
       const targetDy = 16;
       let dressY = 80;
-      const dressSpeed = 1.5;
+      const dressSpeed = cfg.clothesAnimationSpeed ?? 1.5;
       let dressState = "entering"; // -> "waiting"
 
       // round state (timer arms only after dress hits "waiting")
