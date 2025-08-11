@@ -98,10 +98,18 @@
 
       // load ending CG if needed (only for mode "ending")
       this.endingCG = null;
-      if (this.mode === "ending" && this.endingCGPath) {
-        this.endingCG = loadImage(this.endingCGPath);
+      if (this.mode === "ending") {
+        // Prefer a preloaded image via key
+        if (
+          entry.endingCGKey &&
+          typeof window[entry.endingCGKey] !== "undefined"
+        ) {
+          this.endingCG = window[entry.endingCGKey];
+        } else if (entry.endingCG) {
+          // Fallback: path string (legacy)
+          this.endingCG = loadImage(entry.endingCG);
+        }
       }
-
       // set up the first line (including CG)
       this._prepareLineCGAndText();
     }
@@ -145,25 +153,18 @@
         // Ending screen if we're in "ending" mode
         if (this.mode === "ending") {
           if (this.endingCG && this.endingCG.width) {
+            // Just draw the ending card image, no overlay text
             p.image(this.endingCG, 0, 0, this.W, this.H);
           }
-          p.fill(0, 200);
-          p.rect(0, 0, this.W, this.H);
-          p.fill(255);
-          p.textAlign(CENTER, CENTER);
-          p.textSize(12);
-          p.text("ENDING", this.W / 2, this.H / 2 - 8);
-          p.textSize(8);
-          p.text("Click to continue", this.W / 2, this.H / 2 + 8);
-          p.textAlign(LEFT, TOP);
         }
+        p.pop();
         return;
       }
 
-      // Dialog box image (62×20) at (1,43)
+      // Dialog box image
       if (UI.boxImg) p.image(UI.boxImg, UI.boxX, UI.boxY, UI.boxW, UI.boxH);
 
-      // Visible (typewriter) text inside 58×16 area
+      // Visible (typewriter) text
       const visible = this._visibleText();
       const wrapped = this._wrap(visible, UI.textW);
       let ty = UI.textY;
@@ -171,12 +172,11 @@
       p.fill(255);
       for (const ln of wrapped) {
         p.text(ln, UI.textX, ty);
-        ty += 8; // line height at font size 8
-        if (ty > UI.textY + UI.textH - 6) break; // clip
+        ty += 8;
+        if (ty > UI.textY + UI.textH - 6) break;
       }
 
       // ▼ continue arrow (blink) when line fully revealed
-      // Inside draw() where the blinking arrow is drawn:
       const full = this._currentText() || "";
       if (visible.length === full.length && full.length > 0) {
         const t = millis() - this._arrowBlinkAnchor;
@@ -191,6 +191,7 @@
           p.textAlign(LEFT, TOP);
         }
       }
+
       p.pop();
     }
 
