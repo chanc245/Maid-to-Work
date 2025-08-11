@@ -140,7 +140,7 @@
         const cx = item.x + item.w / 2;
         const cy = item.y + item.h / 2;
 
-        const inBadZone = cx >= 0 && cx <= 26 && cy >= 0 && cy <= 26;
+        const inBadZone = cx >= 0 && cx <= 26 && cy >= 0 && cy <= 30;
         const inGoodZone = cx >= 49 && cx <= 64 && cy >= 0 && cy <= 64;
 
         // Score only if dropped into the correct zone
