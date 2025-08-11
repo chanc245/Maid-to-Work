@@ -25,7 +25,7 @@ function drawDayReminder(pix, dayNum, dayTime, totalScore) {
   pix.text(`chore: 1/3`, 31.5, 32);
 
   pix.textAlign(LEFT);
-  pix.text(`TOTAL SCORE: ${totalScore}`, 3, 54);
+  pix.text(`TOTAL SCORE:${totalScore}`, 3, 54);
 
   pix.pop();
 }

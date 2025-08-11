@@ -176,13 +176,18 @@
       }
 
       // ▼ continue arrow (blink) when line fully revealed
+      // Inside draw() where the blinking arrow is drawn:
       const full = this._currentText() || "";
       if (visible.length === full.length && full.length > 0) {
         const t = millis() - this._arrowBlinkAnchor;
         const show = Math.floor(t / this.cfg.arrowBlinkMs) % 2 === 0;
         if (show) {
           p.textAlign(RIGHT, BOTTOM);
-          p.text(">", UI.textX + UI.textW - 2, UI.textY + UI.textH - 1);
+          p.text(
+            DIALOG_ARROW_POS.arrowText,
+            DIALOG_ARROW_POS.textX + DIALOG_ARROW_POS.textW - 2,
+            DIALOG_ARROW_POS.textY + DIALOG_ARROW_POS.textH - 1
+          );
           p.textAlign(LEFT, TOP);
         }
       }
