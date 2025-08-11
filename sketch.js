@@ -20,7 +20,7 @@ let c2GoodImgs = [],
   c2BadBloodImgs = [];
 
 // CHORE 3
-let bg_chore3_river, item_smug, item_sponge;
+let bg_chore3_river, item_smug, item_bloodSmug, item_sponge;
 let clothesImgs = []; // clothes_01_blouse.png, clothes_02_dress.png, clothes_03_shirt.png
 // ---------------------------------------------
 
@@ -32,6 +32,7 @@ let ui_mouse, ui_mouse_click;
 let mouseDown = false;
 
 function preload() {
+  // Audio bank
   SFX.preload();
 
   pixelFont = loadFont("assets/fonts/Pixel Millennium.ttf");
@@ -39,7 +40,7 @@ function preload() {
   // Systems that have their own preloads (Dialog box + True Ending assets)
   GameManager.preload();
 
-  // NEW: title + frame + tutorial cards
+  // Title + frame + tutorial cards
   cg_title = loadImage("assets/dialog/cg_title.png");
   bg_frame = loadImage("assets/ui/bg_frame.png");
 
@@ -111,7 +112,10 @@ function setup() {
   pix.textAlign(LEFT, TOP);
 
   const cnv = document.querySelector("canvas");
-  if (cnv) cnv.style.imageRendering = "pixelated";
+  if (cnv) {
+    cnv.style.imageRendering = "pixelated";
+    cnv.style.touchAction = "none"; // prevent browser gestures on touch
+  }
 
   manager = new GameManager({ pix, W, H, SCALE, font: pixelFont });
   manager.start();
@@ -122,13 +126,17 @@ function draw() {
   manager.update();
   manager.draw();
 
-  // Draw custom mouse if current scene doesn't override it
+  // Draw custom mouse/touch cursor if the scene doesn't override it
   if (ui_mouse && !manager.sceneHasCustomCursor?.()) {
-    const mx = (mouseX / width) * W;
-    const my = (mouseY / height) * H;
-    const mw = ui_mouse.width || 7;
-    const mh = ui_mouse.height || 8;
-    let imgToDraw = mouseDown ? ui_mouse_click : ui_mouse;
+    const { x: px, y: py } = pointerPos(); // supports touch or mouse
+    const mx = (px / width) * W;
+    const my = (py / height) * H;
+
+    const pressed = pointerIsDown(); // true for mouse or touch presses
+    const imgToDraw = pressed && ui_mouse_click ? ui_mouse_click : ui_mouse;
+
+    const mw = imgToDraw.width || 7; // your cursor files are 7x8
+    const mh = imgToDraw.height || 8;
     pix.image(imgToDraw, mx - mw * 0.5, my - mh * 0.5, mw, mh);
   }
 
@@ -150,7 +158,18 @@ function draw() {
   }
 }
 
-// Input handling
+// ---------- Pointer helpers (mouse + touch) ----------
+function pointerIsDown() {
+  return mouseIsPressed || (touches && touches.length > 0);
+}
+function pointerPos() {
+  if (touches && touches.length > 0) {
+    return { x: touches[0].x, y: touches[0].y };
+  }
+  return { x: mouseX, y: mouseY };
+}
+
+// ---------- Input handling ----------
 function mousePressed() {
   mouseDown = true;
   if (manager?.mousePressed) manager.mousePressed();
@@ -164,4 +183,20 @@ function mouseReleased() {
 }
 function keyPressed() {
   if (manager?.keyPressed) manager.keyPressed(key);
+}
+
+// Touch mirrors mouse to support mobile
+function touchStarted() {
+  mouseDown = true;
+  if (manager?.mousePressed) manager.mousePressed();
+  return false;
+}
+function touchMoved() {
+  if (manager?.mouseDragged) manager.mouseDragged();
+  return false;
+}
+function touchEnded() {
+  mouseDown = false;
+  if (manager?.mouseReleased) manager.mouseReleased();
+  return false;
 }
