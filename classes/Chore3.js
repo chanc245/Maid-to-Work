@@ -203,7 +203,11 @@
             successFeedbackTimer = millis();
 
             // stop scrub loop instantly on success
-            if (window.SFX) SFX.stop("wash_scrub");
+            if (window.SFX) {
+              SFX.stop("wash_scrub");
+              SFX.playOnce("wash_clean");
+            }
+
             scrubLoopActive = false;
           }
 
