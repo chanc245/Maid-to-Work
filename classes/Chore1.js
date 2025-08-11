@@ -13,6 +13,7 @@
         pix = this.shared.pix;
 
       // knobs
+      let STARTING_FALL_SPEED = cfg.startingFallSpeed ?? 0.6; // ⬅ default if not set
       let SPEED_RATE = cfg.fallSpeedMultiplier;
       const SPEED_PERIOD_MS = 10000;
       const BAD_BLOOD_PERCENT = Math.max(
@@ -41,8 +42,8 @@
         y: -16,
         w: 16,
         h: 16,
-        baseVy: 0.3,
-        vy: 0.6,
+        baseVy: STARTING_FALL_SPEED, // ⬅ use starting speed
+        vy: STARTING_FALL_SPEED,
         img: null,
       };
       let bad = {
@@ -50,10 +51,10 @@
         y: -16,
         w: 16,
         h: 16,
-        baseVy: 0.4,
-        vy: 0.7,
+        baseVy: STARTING_FALL_SPEED + 0.1, // ⬅ small offset for variety
+        vy: STARTING_FALL_SPEED + 0.1,
         img: null,
-        isBlood: false, // <--- track if this bad is a blood item
+        isBlood: false,
       };
 
       // speed

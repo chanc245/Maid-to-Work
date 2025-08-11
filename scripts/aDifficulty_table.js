@@ -2,8 +2,8 @@
 const DAYS = 3;
 
 const ENDING_SCORE_THRESHOLDS = {
-  trueEnd: 100, // min score for true ending
-  normalEnd: 50, // min score for normal ending
+  trueEnd: 60, // min score for true ending
+  normalEnd: 20, // min score for normal ending
 };
 
 const DIFFICULTY = [
@@ -11,7 +11,9 @@ const DIFFICULTY = [
     chore1: {
       roundTimeLimitSec: 20,
 
+      startingFallSpeed: 0.6,
       fallSpeedMultiplier: 1.1,
+
       badBloodPercent: 0.1,
     },
     chore2: {
@@ -34,7 +36,9 @@ const DIFFICULTY = [
     chore1: {
       roundTimeLimitSec: 15,
 
-      fallSpeedMultiplier: 3,
+      startingFallSpeed: 0.7,
+      fallSpeedMultiplier: 1.5,
+
       badBloodPercent: 15,
     },
     chore2: {
@@ -57,7 +61,9 @@ const DIFFICULTY = [
     chore1: {
       roundTimeLimitSec: 10,
 
-      fallSpeedMultiplier: 4,
+      startingFallSpeed: 0.9,
+      fallSpeedMultiplier: 2,
+
       badBloodPercent: 80,
     },
     chore2: {
