@@ -34,6 +34,10 @@ window.SFX = (function () {
       bank.ui_sleep = loadSound("assets/audio/ui_sleep.mp3");
       bank.ui_countDown = loadSound("assets/audio/ui_countDown.mp3");
 
+      // BASEMENT mini-game
+      bank.basement_clean = loadSound("assets/audio/basement_clean.mp3");
+      bank.basement_stair = loadSound("assets/audio/basement_stair.mp3");
+
       // Optional: default volumes
       if (bg) bg.setVolume(0.35);
 
@@ -55,6 +59,10 @@ window.SFX = (function () {
       if (bank.ui_nextDay) bank.ui_nextDay.setVolume(0.6);
       if (bank.ui_sleep) bank.ui_sleep.setVolume(0.7);
       if (bank.ui_countDown) bank.ui_countDown.setVolume(0.8);
+
+      // BASEMENT
+      if (bank.basement_clean) bank.basement_clean.setVolume(0.7);
+      if (bank.basement_stair) bank.basement_stair.setVolume(0.8);
     },
 
     // Call on first user interaction (autoplay policy)

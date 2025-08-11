@@ -47,6 +47,9 @@
       this._isOver = false;
       this.state = "cycle";
 
+      // safety: stop stair loop if restarting
+      if (window.SFX) SFX.stop("basement_stair");
+
       if (!this.stairGifEl) {
         this.stairGifEl = createImg(ASSETS.bgGifPath, "");
         this.stairGifEl.size(width, height);
@@ -62,7 +65,7 @@
     update(dt) {}
 
     draw() {
-      const { pix, W, H, SCALE = 5 } = this.shared;
+      const { pix, W, H } = this.shared;
       pix.clear();
 
       if (this.state === "cycle") {
@@ -90,16 +93,21 @@
           this.state = "anim";
           this.animStartMs = millis();
           this.stairGifEl.show();
+          // start stair loop while GIF plays
+          if (window.SFX) SFX.loop("basement_stair");
         }
       } else if (this.state === "anim") {
         pix.image(ASSETS.bgPng, 0, 0, W, H);
         if (millis() - this.animStartMs >= this.cfg.gifDurationMs) {
           this.stairGifEl.hide();
+          // stop stair loop as soon as GIF ends
+          if (window.SFX) SFX.stop("basement_stair");
+
           this.cyclesRemaining--;
           if (this.cyclesRemaining > 0) {
             this._startNewCycle();
           } else {
-            // ✅ finish immediately: no "end" state, signal GameManager to continue
+            // finish immediately so GameManager continues to dia_endTrue2
             this._isOver = true;
           }
         }
@@ -131,6 +139,8 @@
         const d = dist(sx, sy, w.x, w.y);
         if (d <= hitR) {
           w.alive = false;
+          // play web clean sfx on click
+          if (window.SFX) SFX.playOnce("basement_clean");
           break;
         }
       }
@@ -151,6 +161,8 @@
       const { H } = this.shared;
       this.state = "cycle";
       this.stairGifEl?.hide();
+      // safety: ensure stair loop isn't running entering a new cycle
+      if (window.SFX) SFX.stop("basement_stair");
 
       const targetCount = randInt(1, 4);
       this.webs = [];
