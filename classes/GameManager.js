@@ -580,19 +580,22 @@
       const { trueEnd, normalEnd } = _getThresholds();
 
       let endingLabel;
-      if (s >= trueEnd) endingLabel = "TRUE END Reached";
-      else if (s >= normalEnd) endingLabel = "Good Ending";
-      else endingLabel = "Bad Ending";
+      if (s >= trueEnd) endingLabel = "True";
+      else if (s >= normalEnd) endingLabel = "Normal";
+      else endingLabel = "Bad";
 
       this.pix.push();
-      this.pix.fill(0, 200);
+      this.pix.fill(0);
       this.pix.rect(0, 0, 64, 64);
       this.pix.fill(255);
-      this.pix.textSize(12);
-      this.pix.text(`END: ${endingLabel}`, 4, 24);
+      this.pix.textSize(16);
+      this.pix.text(`${endingLabel}`, 4, 13);
+      this.pix.text(`Ending`, 4, 25);
       this.pix.textSize(8);
-      this.pix.text(`Score: ${s}`, 4, 38);
-      this.pix.text(`Press R to restart`, 4, 50);
+      this.pix.textAlign(LEFT, TOP);
+      this.pix.text(`TOTAL SCORE: ${s}`, 4, 45);
+      //   pix.textAlign(CENTER);
+      this.pix.text(`[R] RESTART`, 4, 53);
       this.pix.pop();
     }
 

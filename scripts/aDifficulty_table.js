@@ -34,7 +34,7 @@ const DIFFICULTY = [
     chore1: {
       roundTimeLimitSec: 15,
 
-      fallSpeedMultiplier: 1.25,
+      fallSpeedMultiplier: 3,
       badBloodPercent: 15,
     },
     chore2: {
@@ -57,7 +57,7 @@ const DIFFICULTY = [
     chore1: {
       roundTimeLimitSec: 10,
 
-      fallSpeedMultiplier: 1.4,
+      fallSpeedMultiplier: 4,
       badBloodPercent: 80,
     },
     chore2: {
