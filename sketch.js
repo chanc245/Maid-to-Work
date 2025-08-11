@@ -56,6 +56,10 @@ function preload() {
   ui_dayReminder_night = loadImage("assets/ui/ui_dayReminder_night.png");
   ui_daySwap = loadImage("assets/ui/ui_daySwap.gif");
 
+  cg_endBad_ENDCARD = loadImage("assets/dialog/cg_endBad_ENDCARD.png");
+  cg_endNormal_ENDCARD = loadImage("assets/dialog/cg_endNormal_ENDCARD.png");
+  cg_endTure_ENDCARD = loadImage("assets/dialog/cg_endTure_ENDCARD.png");
+
   // ========= CHORE 1 assets =========
   bg_chore1 = loadImage("assets/chore1/bg_chore1_kitchen.png");
   item_pot = loadImage("assets/chore1/item_pot.png");

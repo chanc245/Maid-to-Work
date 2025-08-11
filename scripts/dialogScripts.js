@@ -5,8 +5,8 @@ const DIALOGS = {
     lines: [
       { cg: "cg_intro1_newMaid", text: "I’m the new maid in" },
       { cg: "cg_intro1_newMaid", text: "this mansion!" },
-      { cg: "cg_intro2_determine", text: "I’ll do my best to become" },
-      { cg: "cg_intro2_determine", text: "the best maid!" },
+      { cg: "cg_intro2_determine", text: "I will prove I’m the" },
+      { cg: "cg_intro2_determine", text: "best maid in three days!" },
     ],
   },
 
