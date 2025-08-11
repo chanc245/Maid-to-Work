@@ -54,6 +54,7 @@ function preload() {
   ui_dayReminder_day = loadImage("assets/ui/ui_dayReminder_day.png");
   ui_dayReminder_evening = loadImage("assets/ui/ui_dayReminder_evening.png");
   ui_dayReminder_night = loadImage("assets/ui/ui_dayReminder_night.png");
+  ui_daySwap = loadImage("assets/ui/ui_daySwap.gif");
 
   // ========= CHORE 1 assets =========
   bg_chore1 = loadImage("assets/chore1/bg_chore1_kitchen.png");

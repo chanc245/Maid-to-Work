@@ -31,6 +31,8 @@ window.SFX = (function () {
       // NEW: UI / dialogue sounds
       bank.text_advance = loadSound("assets/audio/text_advence.wav");
       bank.ui_nextDay = loadSound("assets/audio/ui_nextDay.mp3");
+      bank.ui_sleep = loadSound("assets/audio/ui_sleep.mp3");
+      bank.ui_countDown = loadSound("assets/audio/ui_countDown.mp3");
 
       // Optional: default volumes
       if (bg) bg.setVolume(0.35);
@@ -51,6 +53,8 @@ window.SFX = (function () {
       // UI
       if (bank.text_advance) bank.text_advance.setVolume(0.5);
       if (bank.ui_nextDay) bank.ui_nextDay.setVolume(0.6);
+      if (bank.ui_sleep) bank.ui_sleep.setVolume(0.7);
+      if (bank.ui_countDown) bank.ui_countDown.setVolume(0.8);
     },
 
     // Call on first user interaction (autoplay policy)

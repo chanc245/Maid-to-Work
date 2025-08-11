@@ -2,7 +2,7 @@
 (function () {
   const DAYS = 3;
 
-  // -------- States --------
+  // ---------- States ----------
   const S = {
     IDLE: "IDLE",
     IMAGE: "IMAGE",
@@ -15,7 +15,7 @@
     GAME_END: "GAME_END",
   };
 
-  // Dialog IDs (must match scripts/dialogScripts.js)
+  // ---------- Dialog IDs ----------
   const DLG = {
     intro: "dia_Intro",
     endNormal: "dia_endNormal",
@@ -24,13 +24,12 @@
     endTrue2: "dia_endTrue2",
   };
 
-  // -------- Helpers --------
+  // ---------- Helpers ----------
   function _drawCountdownOverlay(pix, W, H, step, word) {
     pix.push();
     pix.noStroke();
-    pix.fill(0, 180);
+    pix.fill(0, 0, 0, 100);
     pix.rect(0, 0, W, H);
-
     pix.fill(255, 200);
     pix.textAlign(CENTER, CENTER);
     if (step >= 4) {
@@ -43,8 +42,7 @@
     pix.pop();
   }
 
-  // thresholds are defined in scripts/aDifficulty_table.js as:
-  // const ENDING_SCORE_THRESHOLDS = { trueEnd: 100, normalEnd: 50 }
+  // thresholds from aDifficulty_table.js
   function _getThresholds() {
     const raw = (typeof ENDING_SCORE_THRESHOLDS !== "undefined" &&
       ENDING_SCORE_THRESHOLDS) || { trueEnd: 100, normalEnd: 50 };
@@ -52,7 +50,6 @@
     if (typeof raw.trueEnd === "number" || typeof raw.normalEnd === "number") {
       return { trueEnd: raw.trueEnd ?? 100, normalEnd: raw.normalEnd ?? 50 };
     }
-    // legacy fallback
     return { trueEnd: raw.trueMin ?? 100, normalEnd: raw.normalMin ?? 50 };
   }
   function _pickEndingType(score) {
@@ -62,10 +59,11 @@
     return "bad";
   }
 
-  // Arrow blink timing (shares config with Dialog via DIALOG_ARROW_POS)
+  // Arrow blink timing
   function _arrowBlinkShow(anchorMs) {
     const blinkMs =
-      (typeof DIALOG_ARROW_POS !== "undefined" && DIALOG_ARROW_POS.blinkMs) ||
+      (typeof DIALOG_ARROW_POS !== "undefined" &&
+        (DIALOG_ARROW_POS.blinkMs || DIALOG_ARROW_POS.arrowBlinkMs)) ||
       550;
     const t = millis() - anchorMs;
     return Math.floor(t / blinkMs) % 2 === 0;
@@ -80,15 +78,20 @@
       color: [255, 255, 255],
     };
     pix.push();
-    const col = P.color || [255, 255, 255];
-    pix.fill(col[0] ?? 255, col[1] ?? 255, col[2] ?? 255);
+    const c = P.color || [255, 255, 255];
+    pix.fill(c[0] ?? 255, c[1] ?? 255, c[2] ?? 255);
     pix.textAlign(RIGHT, BOTTOM);
     pix.text(P.char || ">", P.textX + P.textW - 2, P.textY + P.textH - 1);
     pix.textAlign(LEFT, TOP);
     pix.pop();
   }
 
-  // -------- Manager --------
+  // Map 1..3 to countdown label (D-3 -> D-1)
+  function _displayDayFromInternalDay(n) {
+    // Internal day: 1,2,3 -> display: 3,2,1
+    return Math.max(1, DAYS - n + 1);
+  }
+
   window.GameManager = class {
     constructor(shared) {
       this.pix = shared.pix;
@@ -99,7 +102,6 @@
 
       this.globalScore = 0;
 
-      // Systems
       this.dialog = new Dialog({
         pix: this.pix,
         W: this.W,
@@ -114,42 +116,55 @@
         SCALE: this.SCALE,
       });
 
-      // Chores in order: Chore1 → Chore3 → Chore2
       this.chores = [
-        new Chore1({ pix: this.pix, W: this.W, H: this.H }), // 0
-        new Chore3({ pix: this.pix, W: this.W, H: this.H }), // 1
-        new Chore2({ pix: this.pix, W: this.W, H: this.H }), // 2
+        new Chore1({ pix: this.pix, W: this.W, H: this.H }),
+        new Chore3({ pix: this.pix, W: this.W, H: this.H }),
+        new Chore2({ pix: this.pix, W: this.W, H: this.H }),
       ];
       this.activeChore = null;
 
-      // UI helpers
-      this.dayAnim = new DayChangeAnim(this.pix);
+      // day change animation data (inlined, replaces external DayChangeAnim)
+      this._dayAnim = {
+        active: false,
+        phase: "idle", // "slide" -> "wait"
+        holdTimer: 0,
+        // label config (do not use reserved name LABEL)
+        cfg: {
+          y: 1,
+          xTarget: 15,
+          size: 24,
+          vx: 1.5,
+          offLeft: -40,
+          offRight: 84,
+        },
+        prev: { x: 15, text: "D-3" },
+        next: { x: -40, text: "D-2" },
+        arrowBlinkAnchor: millis(),
+        fromDay: 1,
+        toDay: 2,
+      };
 
-      // Flow
+      this.dayAnim = null; // (unused now, kept to avoid breaking elsewhere)
+
       this.steps = [];
       this.stepIndex = -1;
 
-      // State
       this.state = S.IDLE;
 
-      // Uniform pre-chore countdown
       this.countdownMs = 4000;
       this.countdownStart = 0;
 
-      // Scratch
       this.currentImage = null;
       this.reminder = null;
 
-      // Callbacks
       this._pendingAfterDialog = null;
+
       this._pendingTrueDialog2 = false;
       this._suppressFinalSummary = false;
 
-      // Arrow blink anchors
-      this._arrowBlinkAnchor = millis(); // for IMAGE
-      this._reminderArrowBlinkAnchor = millis(); // for REMINDER
+      this._arrowBlinkAnchor = millis();
+      this._reminderArrowBlinkAnchor = millis();
 
-      // Optional frame behind day anim
       this._dayAnimBg = typeof bg_frame !== "undefined" ? bg_frame : null;
     }
 
@@ -175,19 +190,16 @@
       return false;
     }
 
-    // ---------- Flow ----------
+    // -------- Flow --------
     _buildFlow() {
       const steps = [];
-
-      // Helper to push REMINDER + (optional) IMAGE + CHORE
-      // orderInDay: 1 (morning/day), 2 (evening), 3 (night)
       const addRTC = (dayNum, orderInDay, choreIndex, tutorialImg = null) => {
         steps.push({ type: "REMINDER", dayNum, orderInDay });
         if (tutorialImg) steps.push({ type: "IMAGE", img: tutorialImg });
         steps.push({ type: "CHORE", index: choreIndex, dayNum });
       };
 
-      // DAY 1
+      // Day 1
       steps.push({
         type: "IMAGE",
         img: typeof cg_title !== "undefined" ? cg_title : null,
@@ -215,14 +227,14 @@
 
       steps.push({ type: "DAY_ANIM", from: 1, to: 2 });
 
-      // DAY 2
+      // Day 2
       addRTC(2, 1, 0);
       addRTC(2, 2, 1);
       addRTC(2, 3, 2);
 
       steps.push({ type: "DAY_ANIM", from: 2, to: 3 });
 
-      // DAY 3
+      // Day 3
       addRTC(3, 1, 0);
       addRTC(3, 2, 1);
       addRTC(3, 3, 2);
@@ -238,8 +250,8 @@
         this.state = S.GAME_END;
         return;
       }
-
       const step = this.steps[this.stepIndex];
+
       switch (step.type) {
         case "IMAGE":
           this._startImage(step.img);
@@ -249,15 +261,13 @@
           this.state = S.DIALOG;
           break;
         case "REMINDER":
-          // NOTE: we store orderInDay instead of dayTime; we’ll format later
           this._startReminder(step.dayNum, step.orderInDay);
           break;
         case "CHORE":
           this._startChore(step.index, step.dayNum);
           break;
         case "DAY_ANIM":
-          this.dayAnim.play(step.from, step.to);
-          this.state = S.DAY_ANIM;
+          this._startDayAnim(step.from, step.to);
           break;
         case "ENDING_BRANCH":
           this._startEndingBranch();
@@ -265,6 +275,7 @@
       }
     }
 
+    // -------- Starters --------
     _startImage(img) {
       this.currentImage = img || null;
       this._arrowBlinkAnchor = millis();
@@ -279,7 +290,6 @@
     }
 
     _startChore(index, dayNum) {
-      // Map chore index (0/1/2) to DIFFICULTY keys (chore1/chore3/chore2)
       const difficultyKey = `chore${[1, 3, 2][index]}`;
       const cfg = DIFFICULTY[dayNum - 1][difficultyKey];
 
@@ -287,7 +297,34 @@
       this.activeChore.start(cfg, { skipCountdown: true });
 
       this.countdownStart = millis();
+      this._lastCountdownInt = null;
       this.state = S.COUNTDOWN;
+    }
+
+    _startDayAnim(fromDay, toDay) {
+      // Convert to display countdown labels
+      const prevLabel = `D-${_displayDayFromInternalDay(fromDay)}`;
+      const nextLabel = `D-${_displayDayFromInternalDay(toDay)}`;
+
+      const A = this._dayAnim;
+      A.fromDay = fromDay;
+      A.toDay = toDay;
+
+      // Prepare positions: prev centered (visible), next off-left (hidden)
+      A.prev.text = prevLabel;
+      A.prev.x = A.cfg.xTarget;
+
+      A.next.text = nextLabel;
+      A.next.x = A.cfg.offLeft;
+
+      A.active = true;
+      A.phase = "ready"; // <— wait here until user clicks
+      A.holdTimer = 0;
+      A.arrowBlinkAnchor = millis();
+
+      this.state = S.DAY_ANIM;
+
+      if (window.SFX) SFX.playOnce("ui_sleep");
     }
 
     _startEndingBranch() {
@@ -296,8 +333,6 @@
 
       if (endingType === "true") {
         this._suppressFinalSummary = true;
-
-        // 1) dia_endTrue1 → 2) EndingTrue minigame → 3) dia_endTrue2
         this.dialog.start({ id: DLG.endTrue1, mode: "normal" });
         this.state = S.DIALOG;
         this._pendingAfterDialog = () => {
@@ -320,12 +355,24 @@
       }
     }
 
-    // ---------- Update/Draw ----------
+    // -------- Update --------
     update() {
       const now = millis();
 
       switch (this.state) {
         case S.COUNTDOWN: {
+          // Play tick when the displayed number changes (3,2,1)
+          const leftInt = Math.ceil(
+            (this.countdownMs - (now - this.countdownStart)) / 1000
+          );
+          if (leftInt !== this._lastCountdownInt) {
+            if (leftInt > 0 && leftInt <= 3 && window.SFX) {
+              SFX.playOnce("ui_countDown");
+            }
+            this._lastCountdownInt = leftInt;
+          }
+
+          // Finish countdown -> start playing
           if (now - this.countdownStart >= this.countdownMs) {
             this.state = S.PLAYING;
           }
@@ -350,8 +397,7 @@
           break;
         }
         case S.DAY_ANIM: {
-          this.dayAnim.update();
-          if (this.dayAnim.isDone()) this._nextStep();
+          this._updateDayAnim();
           break;
         }
         case S.TRUE_ENDING: {
@@ -373,6 +419,29 @@
       }
     }
 
+    _updateDayAnim() {
+      const A = this._dayAnim;
+      if (!A.active) return;
+
+      if (A.phase === "slide") {
+        // slide prev → out, next → in to target
+        A.prev.x += A.cfg.vx;
+        A.next.x += A.cfg.vx;
+        if (A.next.x >= A.cfg.xTarget) A.next.x = A.cfg.xTarget;
+
+        const prevGone = A.prev.x >= A.cfg.offRight;
+        const nextAtTarget = A.next.x === A.cfg.xTarget;
+        if (prevGone && nextAtTarget) {
+          // finished movement, wait for user click to advance
+          A.phase = "wait";
+          A.holdTimer = 0;
+          A.arrowBlinkAnchor = millis();
+        }
+      }
+      // phase "wait": just idle; click handled in mousePressed()
+    }
+
+    // -------- Draw --------
     draw() {
       switch (this.state) {
         case S.IMAGE: {
@@ -382,12 +451,9 @@
             _drawAdvanceArrow(this.pix);
           break;
         }
-
         case S.REMINDER: {
           const order = this.reminder.orderInDay; // 1..3
           const displayDay = Math.max(1, DAYS - this.reminder.dayNum + 1);
-
-          // Map order -> (img, label, choreNum)
           let dayImg = null,
             timeLabel = "morning",
             choreNum = 1;
@@ -413,8 +479,6 @@
             timeLabel = "night";
             choreNum = 3;
           }
-
-          // drawDayReminder(pix, dayImg, dayNum, dayTime, choreNum, totalScore)
           drawDayReminder(
             this.pix,
             dayImg,
@@ -423,14 +487,11 @@
             choreNum,
             this.globalScore
           );
-
-          // Blink the same continue arrow
           if (_arrowBlinkShow(this._reminderArrowBlinkAnchor)) {
             _drawAdvanceArrow(this.pix);
           }
           break;
         }
-
         case S.COUNTDOWN: {
           const left = Math.ceil(
             (this.countdownMs - (millis() - this.countdownStart)) / 1000
@@ -442,43 +503,76 @@
           _drawCountdownOverlay(this.pix, this.W, this.H, stepCount, label);
           break;
         }
-
         case S.PLAYING: {
           this.activeChore.draw(this.pix);
           break;
         }
-
         case S.DIALOG: {
           this.dialog.draw();
           break;
         }
-
         case S.DAY_ANIM: {
-          this.dayAnim.draw(this._dayAnimBg);
+          this._drawDayAnim();
           break;
         }
-
         case S.TRUE_ENDING: {
           this.endingTrue.draw();
           break;
         }
-
         case S.GAME_END: {
           if (!this._suppressFinalSummary) this._drawFinalSummary();
           break;
         }
       }
 
-      // Always draw the frame last, on top
       if (typeof bg_frame !== "undefined" && bg_frame) {
         this.pix.image(bg_frame, 0, 0, 64, 64);
       }
     }
 
+    _drawDayAnim() {
+      const A = this._dayAnim;
+      const p = this.pix;
+
+      p.push();
+      p.fill(0);
+      p.rect(0, 0, 64, 64);
+      if (typeof ui_daySwap !== "undefined" && ui_daySwap) {
+        p.image(ui_daySwap, 0, 0, 64, 64);
+      }
+
+      p.fill(200);
+      p.textSize(A.cfg.size);
+      p.textAlign(LEFT, TOP);
+
+      if (A.phase === "ready") {
+        // show only current day label centered
+        p.text(A.prev.text, Math.round(A.prev.x), A.cfg.y);
+      } else {
+        // slide phase or wait phase: draw both
+        p.text(A.prev.text, Math.round(A.prev.x), A.cfg.y);
+        p.text(A.next.text, Math.round(A.next.x), A.cfg.y);
+      }
+
+      // bottom score
+      p.textSize(8);
+      p.textAlign(LEFT, TOP);
+      p.text(`TOTAL SCORE:${this.globalScore}`, 3, 54);
+
+      // blink arrow in ready & wait phases
+      if (
+        (A.phase === "ready" || A.phase === "wait") &&
+        _arrowBlinkShow(A.arrowBlinkAnchor)
+      ) {
+        _drawAdvanceArrow(p);
+      }
+      p.pop();
+    }
+
     _whichChoreIndexForHUD() {
       if (this.activeChore instanceof Chore1) return 0;
       if (this.activeChore instanceof Chore3) return 1;
-      return 2; // Chore2
+      return 2;
     }
 
     _drawFinalSummary() {
@@ -502,7 +596,7 @@
       this.pix.pop();
     }
 
-    // ---------- Input ----------
+    // -------- Inputs --------
     mousePressed() {
       if (window.SFX) SFX.startBG();
       switch (this.state) {
@@ -518,6 +612,18 @@
           if (window.SFX) SFX.playOnce("text_advance");
           this.dialog.mousePressed();
           break;
+        case S.DAY_ANIM: {
+          const A = this._dayAnim;
+          if (A.phase === "ready") {
+            A.phase = "slide";
+          } else if (A.phase === "wait") {
+            if (window.SFX) SFX.playOnce("text_advance");
+            A.active = false;
+            A.phase = "idle";
+            this._nextStep();
+          }
+          break;
+        }
         case S.TRUE_ENDING:
           this.endingTrue.mousePressed();
           break;
@@ -539,6 +645,10 @@
       if (this.state === S.PLAYING) this.activeChore?.handleKeyPressed?.(k);
       else if (this.state === S.DIALOG) this.dialog.keyPressed(k);
       else if (this.state === S.TRUE_ENDING) this.endingTrue.keyPressed?.(k);
+      else if (this.state === S.DAY_ANIM && this._dayAnim.phase === "wait") {
+        // also allow keyboard to advance on day anim wait
+        if (k === " " || k === "Enter") this.mousePressed();
+      }
     }
   };
 })();

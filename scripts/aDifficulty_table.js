@@ -12,22 +12,22 @@ const DIFFICULTY = [
       roundTimeLimitSec: 20,
 
       fallSpeedMultiplier: 1.1,
-      badBloodPercent: 1, // % of BAD that are blood
+      badBloodPercent: 0.1,
     },
     chore2: {
       roundTimeLimitSec: 20,
       goatAnimationDurationMs: 800,
 
-      goodSpawnPercent: 50, // % of all spawns that are GOOD
-      badSpawnPercent: 50, // % of all spawns that are BAD
-      badBloodPercent: 1, // % of BAD that are blood
+      goodSpawnPercent: 50,
+      badSpawnPercent: 50,
+      badBloodPercent: 0.1,
     },
     chore3: {
       roundTimeLimitSec: 20,
 
       stainCount: 3,
       stainFadePerFrame: 6,
-      bloodSmugPercent: 1,
+      bloodSmugPercent: 0.1,
     },
   },
   {
