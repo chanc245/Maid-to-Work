@@ -51,6 +51,10 @@ function preload() {
   ui_chore2_ex = loadImage("assets/ui/ui_chore2_ex.png");
   ui_chore3_ex = loadImage("assets/ui/ui_chore3_ex.png");
 
+  ui_dayReminder_day = loadImage("assets/ui/ui_dayReminder_day.png");
+  ui_dayReminder_evening = loadImage("assets/ui/ui_dayReminder_evening.png");
+  ui_dayReminder_night = loadImage("assets/ui/ui_dayReminder_night.png");
+
   // ========= CHORE 1 assets =========
   bg_chore1 = loadImage("assets/chore1/bg_chore1_kitchen.png");
   item_pot = loadImage("assets/chore1/item_pot.png");

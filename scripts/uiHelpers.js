@@ -3,15 +3,16 @@
 
 // Draw the full-screen day reminder card.
 // Strongly isolated overlay. Call as: drawDayReminder(pix, dayNum, dayTime, totalScore)
-function drawDayReminder(pix, dayNum, dayTime, totalScore) {
+function drawDayReminder(pix, dayImg, dayNum, dayTime, choreNum, totalScore) {
   pix.push();
   pix.resetMatrix();
   pix.noStroke();
   pix.noTint();
 
   // backdrop
-  pix.fill(200, 200, 200, 200);
-  pix.rect(0, 0, 64, 64);
+  // pix.fill(200, 200, 200, 200);
+  // pix.rect(0, 0, 64, 64);
+  pix.image(dayImg, 0, 0, 64, 64);
 
   // text
   pix.fill(230);
@@ -19,10 +20,10 @@ function drawDayReminder(pix, dayNum, dayTime, totalScore) {
   pix.textSize(16);
 
   pix.textAlign(CENTER);
-  pix.text(`DAY ${dayNum}`, 32, 1);
+  pix.text(`D-${dayNum}`, 32, 1);
   pix.text(`${dayTime}`, 32, 14);
   pix.textSize(8);
-  pix.text(`chore: 1/3`, 31.5, 32);
+  pix.text(`chore: ${choreNum}/3`, 31.5, 32);
 
   pix.textAlign(LEFT);
   pix.text(`TOTAL SCORE:${totalScore}`, 3, 54);
