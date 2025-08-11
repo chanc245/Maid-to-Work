@@ -27,7 +27,9 @@ let clothesImgs = []; // clothes_01_blouse.png, clothes_02_dress.png, clothes_03
 let cg_title; // title CG
 let bg_frame; // frame bg for day-anim (optional)
 let ui_chore1_ex, ui_chore2_ex, ui_chore3_ex; // tutorial cards
-let ui_mouse; // default cursor image
+
+let ui_mouse, ui_mouse_click;
+let mouseDown = false;
 
 function preload() {
   SFX.preload();
@@ -38,9 +40,12 @@ function preload() {
   GameManager.preload();
 
   // NEW: title + frame + tutorial cards
-  cg_title = loadImage("assets/dialog/cg_title.png"); // <- put your image here
-  bg_frame = loadImage("assets/ui/bg_frame.png"); // optional, for day-anim
+  cg_title = loadImage("assets/dialog/cg_title.png");
+  bg_frame = loadImage("assets/ui/bg_frame.png");
+
   ui_mouse = loadImage("assets/ui/ui_mouse.png");
+  ui_mouse_click = loadImage("assets/ui/ui_mouse_click.png");
+
   ui_chore1_ex = loadImage("assets/ui/ui_chore1_ex.png");
   ui_chore2_ex = loadImage("assets/ui/ui_chore2_ex.png");
   ui_chore3_ex = loadImage("assets/ui/ui_chore3_ex.png");
@@ -117,16 +122,17 @@ function draw() {
   manager.update();
   manager.draw();
 
+  // Draw custom mouse if current scene doesn't override it
   if (ui_mouse && !manager.sceneHasCustomCursor?.()) {
     const mx = (mouseX / width) * W;
     const my = (mouseY / height) * H;
-    // draw at native size; offset so hotspot feels like tip
-    const mw = ui_mouse.width || 12;
-    const mh = ui_mouse.height || 12;
-    pix.image(ui_mouse, mx - mw * 0.5, my - mh * 0.5, mw, mh);
+    const mw = ui_mouse.width || 7;
+    const mh = ui_mouse.height || 8;
+    let imgToDraw = mouseDown ? ui_mouse_click : ui_mouse;
+    pix.image(imgToDraw, mx - mw * 0.5, my - mh * 0.5, mw, mh);
   }
 
-  // ALWAYS draw the frame last (on top of everything)
+  // Frame on top of everything
   if (bg_frame) {
     pix.push();
     pix.noTint();
@@ -144,14 +150,16 @@ function draw() {
   }
 }
 
-// Input routing with guards (avoids early event errors)
+// Input handling
 function mousePressed() {
+  mouseDown = true;
   if (manager?.mousePressed) manager.mousePressed();
 }
 function mouseDragged() {
   if (manager?.mouseDragged) manager.mouseDragged();
 }
 function mouseReleased() {
+  mouseDown = false;
   if (manager?.mouseReleased) manager.mouseReleased();
 }
 function keyPressed() {
