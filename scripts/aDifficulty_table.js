@@ -95,9 +95,9 @@ const DIALOG_ARROW_POS = {
   textY: 46,
   textW: 58,
   textH: 16,
-  arrowText: ">", // character to display
-  arrowBlinkMs: 550, // blink speed (ms)
-  arrowColor: [255, 255, 255, 230], // RGB color (white by default)
+  arrowText: ">",
+  arrowBlinkMs: 550,
+  arrowColor: [255, 255, 255, 230],
 };
 
 window.DIALOG_ARROW_POS = DIALOG_ARROW_POS;
