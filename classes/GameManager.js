@@ -2,6 +2,13 @@
 (function () {
   const DAYS = 3;
 
+  const DIALOG_ARROW_POS = {
+    textX: 4,
+    textY: 45,
+    textW: 58,
+    textH: 16,
+  };
+
   // Manager states
   const S = {
     IDLE: "IDLE",
@@ -131,6 +138,10 @@
 
       // optional bg frame for day anim (if loaded)
       this._dayAnimBg = typeof bg_frame !== "undefined" ? bg_frame : null;
+
+      // Blink arrow (for "click to advance" on IMAGE/REMINDER)
+      this._arrowBlinkAnchor = millis();
+      this._arrowBlinkMs = 400; // match Dialog’s blink speed
     }
 
     // Preloads for subsystems
@@ -145,6 +156,9 @@
       this.globalScore = 0;
       this._suppressFinalSummary = false; // reset per run
       this._pendingTrueDialog2 = false;
+
+      // reset blink anchor each run
+      this._arrowBlinkAnchor = millis();
 
       this.steps = this._buildFlow();
       this.stepIndex = -1;
@@ -262,11 +276,13 @@
     _startImage(img) {
       this.currentImage = img || null;
       this.state = S.IMAGE;
+      this._arrowBlinkAnchor = millis(); // refresh blink timing
     }
 
     _startReminder(dayNum, dayTime) {
       this.reminder = { dayNum, dayTime };
       this.state = S.REMINDER;
+      this._arrowBlinkAnchor = millis(); // refresh blink timing
       if (window.SFX) SFX.playOnce("ui_nextDay");
     }
 
@@ -378,6 +394,7 @@
         case S.IMAGE: {
           if (this.currentImage)
             this.pix.image(this.currentImage, 0, 0, 64, 64);
+          this._drawAdvanceArrow(this.pix);
           break;
         }
         case S.REMINDER: {
@@ -387,6 +404,7 @@
             this.reminder.dayTime,
             this.globalScore
           );
+          this._drawAdvanceArrow(this.pix);
           console.log(
             `Day:${this.reminder.dayNum}; TotalScore:${this.globalScore}`
           );
@@ -441,7 +459,7 @@
 
     _drawFinalSummary() {
       console.log(
-        `Day:${this.reminder.dayNum}; TotalScore:${this.globalScore}`
+        `Day:${this.reminder?.dayNum}; TotalScore:${this.globalScore}`
       );
       const s = this.globalScore;
       const { trueEnd, normalEnd } = _getThresholds();
@@ -461,6 +479,25 @@
       this.pix.text(`Score: ${s}`, 4, 38);
       this.pix.text(`Press R to restart`, 4, 50);
       this.pix.pop();
+    }
+
+    // >>> NEW: shared blinking advance arrow for IMAGE & REMINDER
+    _drawAdvanceArrow(p) {
+      const t = millis() - this._arrowBlinkAnchor;
+      const show = Math.floor(t / this._arrowBlinkMs) % 2 === 0;
+      if (!show) return;
+
+      // Same coordinates used in Dialog.js:
+      // p.text(">", UI.textX + UI.textW - 2, UI.textY + UI.textH - 1);
+      const { textX, textY, textW, textH } = DIALOG_ARROW_POS;
+
+      p.push();
+      p.fill(200);
+      p.textAlign(RIGHT, BOTTOM);
+      p.textSize(8);
+      p.text(">", textX + textW - 2, textY + textH - 1);
+      p.textAlign(LEFT, TOP);
+      p.pop();
     }
 
     // ---------------- Input routing ----------------

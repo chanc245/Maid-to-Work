@@ -5,25 +5,27 @@
 // Strongly isolated overlay. Call as: drawDayReminder(pix, dayNum, dayTime, totalScore)
 function drawDayReminder(pix, dayNum, dayTime, totalScore) {
   pix.push();
-  pix.resetMatrix(); // prevent any lingering transforms
+  pix.resetMatrix();
   pix.noStroke();
   pix.noTint();
 
   // backdrop
-  pix.fill(0, 240);
+  pix.fill(200, 200, 200, 200);
   pix.rect(0, 0, 64, 64);
 
   // text
   pix.fill(230);
   pix.textAlign(LEFT, TOP);
   pix.textSize(16);
-  // If you want to force a specific font each time, uncomment:
-  // if (typeof pixelFont !== 'undefined' && pixelFont) pix.textFont(pixelFont);
 
-  pix.text(`DAY ${dayNum}`, 3, 3);
-  pix.text(`${dayTime}`, 3, 14);
+  pix.textAlign(CENTER);
+  pix.text(`DAY ${dayNum}`, 32, 1);
+  pix.text(`${dayTime}`, 32, 14);
   pix.textSize(8);
-  pix.text(`TOTAL SCORE:${totalScore}`, 3, 54);
+  pix.text(`chore: 1/3`, 31.5, 32);
+
+  pix.textAlign(LEFT);
+  pix.text(`TOTAL SCORE: ${totalScore}`, 3, 54);
 
   pix.pop();
 }
