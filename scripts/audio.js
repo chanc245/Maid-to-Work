@@ -51,7 +51,7 @@ window.SFX = (function () {
       if (bank.wash_clean) bank.wash_clean.setVolume(0.8);
 
       // CHORE 3
-      if (bank.paper_chew) bank.paper_chew.setVolume(0.9);
+      if (bank.paper_chew) bank.paper_chew.setVolume(0.6);
       if (bank.paper_sort) bank.paper_sort.setVolume(0.6);
 
       // UI
@@ -61,8 +61,8 @@ window.SFX = (function () {
       if (bank.ui_countDown) bank.ui_countDown.setVolume(0.8);
 
       // BASEMENT
-      if (bank.basement_clean) bank.basement_clean.setVolume(1.2);
-      if (bank.basement_stair) bank.basement_stair.setVolume(1);
+      if (bank.basement_clean) bank.basement_clean.setVolume(1.5);
+      if (bank.basement_stair) bank.basement_stair.setVolume(1.3);
     },
 
     // Call on first user interaction (autoplay policy)
