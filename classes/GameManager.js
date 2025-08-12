@@ -28,7 +28,7 @@
   function _drawCountdownOverlay(pix, W, H, step, word) {
     pix.push();
     pix.noStroke();
-    pix.fill(0, 0, 0, 100);
+    pix.fill(0, 0, 0, 200);
     pix.rect(0, 0, W, H);
     pix.fill(255, 200);
     pix.textAlign(CENTER, CENTER);
@@ -502,6 +502,9 @@
           break;
         }
         case S.COUNTDOWN: {
+          // Draw only a static backdrop for the active chore (no logic/timers!)
+          this._drawCountdownBackdrop();
+
           const left = Math.ceil(
             (this.countdownMs - (millis() - this.countdownStart)) / 1000
           );
@@ -509,6 +512,7 @@
           const label = ["catch!", "scrub!", "sort!"][
             this._whichChoreIndexForHUD()
           ];
+
           _drawCountdownOverlay(this.pix, this.W, this.H, stepCount, label);
           break;
         }
@@ -550,6 +554,41 @@
       if (typeof bg_frame !== "undefined" && bg_frame) {
         this.pix.image(bg_frame, 0, 0, 64, 64);
       }
+    }
+
+    _drawCountdownBackdrop() {
+      // Chore1 backdrop
+      if (this.activeChore instanceof Chore1) {
+        if (typeof bg_chore1 !== "undefined" && bg_chore1) {
+          this.pix.image(bg_chore1, 0, 0, 64, 64);
+        } else {
+          this.pix.background(0); // fallback
+        }
+        return;
+      }
+
+      // Chore3 backdrop
+      if (this.activeChore instanceof Chore3) {
+        if (typeof bg_chore3_river !== "undefined" && bg_chore3_river) {
+          this.pix.image(bg_chore3_river, 0, 0, 64, 64);
+        } else {
+          this.pix.background(0);
+        }
+        return;
+      }
+
+      // Chore2 backdrop
+      if (this.activeChore instanceof Chore2) {
+        if (typeof bg_chore2_table !== "undefined" && bg_chore2_table) {
+          this.pix.image(bg_chore2_table, 0, 0, 64, 64);
+        } else {
+          this.pix.background(0);
+        }
+        return;
+      }
+
+      // Unknown chore fallback
+      this.pix.background(0);
     }
 
     _drawDayAnim() {
