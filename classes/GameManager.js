@@ -327,7 +327,7 @@
       const endingType = _pickEndingType(finalScore);
 
       if (endingType === "true") {
-        this._suppressFinalSummary = true;
+        this._suppressFinalSummary = false;
         this.dialog.start({ id: DLG.endTrue1, mode: "normal" });
         this.state = S.DIALOG;
         this._pendingAfterDialog = () => {
@@ -401,6 +401,7 @@
               this.dialog.start({ id: DLG.endTrue2, mode: "ending" });
               this.state = S.DIALOG;
               this._pendingAfterDialog = () => {
+                this._suppressFinalSummary = false;
                 this.state = S.GAME_END;
               };
             } else {
@@ -586,6 +587,27 @@
       this.pix.pop();
     }
 
+    // --- DEBUG: force full true-ending flow (dia_endTrue1 → EndingTrue → dia_endTrue2)
+    _startTrueEndingSequenceDebug() {
+      // match the real true path behavior
+      this._suppressFinalSummary = false;
+
+      // clear any pending transitions
+      this._pendingAfterDialog = null;
+      this._pendingTrueDialog2 = false;
+
+      // 1) first true-ending dialog
+      this.dialog.start({ id: "dia_endTrue1", mode: "normal" });
+      this.state = S.DIALOG;
+
+      // after dialog, run the minigame, then dia_endTrue2
+      this._pendingAfterDialog = () => {
+        this._pendingTrueDialog2 = true;
+        this.state = S.TRUE_ENDING;
+        this.endingTrue.start({ sceneRepeatTarget: 3 }); // keep your current target
+      };
+    }
+
     // -------- Inputs --------
     mousePressed() {
       if (window.SFX) SFX.startBG();
@@ -640,6 +662,7 @@
       }
 
       // DEBUG: jump to endcards
+
       if (k === "1") {
         console.log("[DEBUG] Jumping to Bad Ending");
         this.startDialog("dia_endBad", "ending", true);
@@ -651,8 +674,10 @@
         return;
       }
       if (k === "3") {
-        console.log("[DEBUG] Jumping to True Ending");
-        this.startDialog("dia_endTrue2", "ending", true);
+        console.log(
+          "[DEBUG] Running full True Ending flow (dia_endTrue1 -> mini-game -> dia_endTrue2)"
+        );
+        this._startTrueEndingSequenceDebug();
         return;
       }
     }
@@ -663,6 +688,7 @@
       this.state = S.DIALOG;
       if (mode === "ending" && endAfterIfEnding) {
         this._pendingAfterDialog = () => {
+          this._suppressFinalSummary = false;
           this.state = S.GAME_END;
         };
       }
