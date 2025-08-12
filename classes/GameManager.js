@@ -98,6 +98,7 @@
       this.H = shared.H;
       this.SCALE = shared.SCALE;
       this.pixelFont = shared.font;
+      this.basementIntroShown = false;
 
       this.globalScore = 0;
 
@@ -332,6 +333,7 @@
         this.state = S.DIALOG;
         this._pendingAfterDialog = () => {
           this._pendingTrueDialog2 = true;
+          this.basementIntroShown = false;
           this.state = S.TRUE_ENDING;
           this.endingTrue.start({ sceneRepeatTarget: 3 });
         };
@@ -394,6 +396,17 @@
           break;
         }
         case S.TRUE_ENDING: {
+          // If intro not acknowledged yet, just wait for click/key to flip the flag.
+          if (!this.basementIntroShown) {
+            if (mouseIsPressed || keyIsPressed) {
+              this.basementIntroShown = true;
+              if (window.SFX) SFX.playOnce("text_advance");
+              this.endingTrue.start({ sceneRepeatTarget: 3 }); // start mini-game now
+            }
+            break; // don’t update mini-game yet
+          }
+
+          // Mini-game running
           this.endingTrue.update(0);
           if (this.endingTrue.isOver()) {
             if (this._pendingTrueDialog2) {
@@ -507,6 +520,19 @@
           break;
         }
         case S.TRUE_ENDING: {
+          if (!this.basementIntroShown) {
+            // Draw the intro image
+            if (typeof ui_basement_ex !== "undefined" && ui_basement_ex) {
+              this.pix.image(ui_basement_ex, 0, 0, this.W, this.H);
+            }
+            // Blink the same advance arrow
+            if (_arrowBlinkShow(this._arrowBlinkAnchor)) {
+              _drawAdvanceArrow(this.pix);
+            }
+            break; // don’t draw mini-game yet
+          }
+
+          // Mini-game visuals
           this.endingTrue.draw();
           break;
         }

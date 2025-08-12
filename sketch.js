@@ -50,6 +50,7 @@ function preload() {
   ui_chore1_ex = loadImage("assets/ui/ui_chore1_ex.png");
   ui_chore2_ex = loadImage("assets/ui/ui_chore2_ex.png");
   ui_chore3_ex = loadImage("assets/ui/ui_chore3_ex.png");
+  ui_basement_ex = loadImage("assets/ui/ui_basement_ex.png");
 
   ui_dayReminder_day = loadImage("assets/ui/ui_dayReminder_day.png");
   ui_dayReminder_evening = loadImage("assets/ui/ui_dayReminder_evening.png");
