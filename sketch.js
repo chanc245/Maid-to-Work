@@ -2,7 +2,7 @@
 
 const W = 64,
   H = 64,
-  SCALE = 5;
+  SCALE = 10;
 
 let pix, pixelFont, manager;
 
