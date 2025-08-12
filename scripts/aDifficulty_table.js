@@ -2,8 +2,8 @@
 const DAYS = 3;
 
 const ENDING_SCORE_THRESHOLDS = {
-  trueEnd: 60, // min score for true ending
-  normalEnd: 20, // min score for normal ending
+  trueEnd: 120, // min score for true ending
+  normalEnd: 60, // min score for normal ending
 };
 
 const DIFFICULTY = [
