@@ -27,7 +27,7 @@ const DIFFICULTY = [
     chore3: {
       roundTimeLimitSec: 20,
 
-      clothesAnimationSpeed: 0.15,
+      clothesAnimationSpeed: 1.5,
 
       stainCount: 3,
       stainFadePerFrame: 6,
@@ -54,7 +54,7 @@ const DIFFICULTY = [
     chore3: {
       roundTimeLimitSec: 15,
 
-      clothesAnimationSpeed: 0.25,
+      clothesAnimationSpeed: 2.5,
 
       stainCount: 4,
       stainFadePerFrame: 5,
@@ -81,7 +81,7 @@ const DIFFICULTY = [
     chore3: {
       roundTimeLimitSec: 10,
 
-      clothesAnimationSpeed: 0.35,
+      clothesAnimationSpeed: 3.5,
 
       stainCount: 4,
       stainFadePerFrame: 4,

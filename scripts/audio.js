@@ -61,8 +61,8 @@ window.SFX = (function () {
       if (bank.ui_countDown) bank.ui_countDown.setVolume(0.8);
 
       // BASEMENT
-      if (bank.basement_clean) bank.basement_clean.setVolume(0.7);
-      if (bank.basement_stair) bank.basement_stair.setVolume(0.8);
+      if (bank.basement_clean) bank.basement_clean.setVolume(1.2);
+      if (bank.basement_stair) bank.basement_stair.setVolume(1);
     },
 
     // Call on first user interaction (autoplay policy)
