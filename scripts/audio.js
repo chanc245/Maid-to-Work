@@ -37,6 +37,7 @@ window.SFX = (function () {
       // BASEMENT mini-game
       bank.basement_clean = loadSound("assets/audio/basement_clean.mp3");
       bank.basement_stair = loadSound("assets/audio/basement_stair.mp3");
+      bank.basement_spider = loadSound("assets/audio/basement_spider.mp3");
 
       // Optional: default volumes
       if (bg) bg.setVolume(0.35);
@@ -63,6 +64,7 @@ window.SFX = (function () {
       // BASEMENT
       if (bank.basement_clean) bank.basement_clean.setVolume(1.5);
       if (bank.basement_stair) bank.basement_stair.setVolume(1.3);
+      if (bank.basement_spider) bank.basement_spider.setVolume(1);
     },
 
     // Call on first user interaction (autoplay policy)

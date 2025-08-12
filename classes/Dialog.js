@@ -1,5 +1,4 @@
 // classes/Dialog.js
-
 (function () {
   // UI geometry (64×64 buffer)
   const UI = {
@@ -11,7 +10,7 @@
     boxW: 62,
     boxH: 20,
 
-    // inner text region (58×16) at (2,44)
+    // inner text region (58×16) at (4,45)
     textX: 4,
     textY: 45,
     textW: 58,
@@ -21,11 +20,28 @@
   // Behavior knobs
   const DEFAULTS = {
     typewriterCPS: 35, // characters per second
-    arrowBlinkMs: 550, // > blink rate
+    arrowBlinkMs: 550, // > blink rate (kept as an internal default)
   };
 
   // Cache CG images: key -> p5.Image (looked up under assets/dialog/<key>.png)
   const CG_CACHE = new Map();
+
+  // tiny helper to safely read global arrow config with fallbacks
+  function getArrowCfg() {
+    const P =
+      (typeof DIALOG_ARROW_POS !== "undefined" && DIALOG_ARROW_POS) || {};
+    return {
+      textX: P.textX ?? 4,
+      textY: P.textY ?? 45,
+      textW: P.textW ?? 58,
+      textH: P.textH ?? 16,
+      arrowText: P.arrowText ?? ">",
+      arrowBlinkMs: P.arrowBlinkMs ?? P.blinkMs ?? 550,
+      arrowColor: Array.isArray(P.arrowColor)
+        ? P.arrowColor
+        : [255, 255, 255, 230],
+    };
+  }
 
   window.Dialog = class {
     static preload() {
@@ -43,9 +59,10 @@
 
       // data / config for current run
       this.mode = "normal"; // "normal" | "ending"
-      this.lines = []; // [{cg?:string, text:string}, ...]
-      this.endingCGPath = null;
-      this.endingCG = null; // p5.Image (optional, only for ending mode)
+      this.lines = []; // [{cg?:string, text:string, audio?:string}, ...]
+      this.endingCGPath = null; // string path (optional)
+      this.endingCGKey = null; // global key fallback (optional)
+      this.endingCG = null; // p5.Image (only for ending mode)
 
       // runtime state
       this.index = 0;
@@ -71,19 +88,31 @@
       const entry = typeof DIALOGS !== "undefined" ? DIALOGS[id] : null;
       if (!entry) {
         console.warn(`[Dialog] Missing DIALOGS entry "${id}"`);
-        this.lines = [{ text: "(missing dialog)" }];
+        this.lines = [{ text: "(missing dialog)", cg: null, audio: null }];
         this.endingCGPath = null;
+        this.endingCGKey = null;
       } else if (Array.isArray(entry)) {
         // Backward-compat: plain array of strings → convert
-        this.lines = entry.map((t) => ({ cg: null, text: String(t) }));
+        this.lines = entry.map((t) => ({
+          cg: null,
+          text: String(t),
+          audio: null,
+        }));
         this.endingCGPath = null;
+        this.endingCGKey = null;
       } else {
-        // Object form: { lines: [...], endingCG?: "path" }
+        // Object form: { lines: [...], endingCG?: "path", endingCGKey?: "globalVar" }
         this.lines = (entry.lines || []).map((obj) => {
-          if (typeof obj === "string") return { cg: null, text: obj };
-          return { cg: obj.cg || null, text: String(obj.text || "") };
+          if (typeof obj === "string")
+            return { cg: null, text: obj, audio: null };
+          return {
+            cg: obj.cg || null,
+            text: String(obj.text || ""),
+            audio: obj.audio || null, // <-- per-line audio tag (e.g., "basement_spider")
+          };
         });
         this.endingCGPath = entry.endingCG || null;
+        this.endingCGKey = entry.endingCGKey || null;
       }
 
       // reset runtime
@@ -99,27 +128,27 @@
       // load ending CG if needed (only for mode "ending")
       this.endingCG = null;
       if (this.mode === "ending") {
-        if (entry.endingCG) {
-          // Try to load from path; if it fails, fall back to key (if present)
+        if (this.endingCGPath) {
+          // try path first, fall back to key if load fails and key exists
           this.endingCG = loadImage(
-            entry.endingCG,
-            () => {}, // success noop
+            this.endingCGPath,
+            () => {},
             () => {
               if (this.endingCGKey && window[this.endingCGKey]) {
                 this.endingCG = window[this.endingCGKey];
               } else {
                 console.warn(
-                  "[Dialog] endingCG failed to load and no valid endingCGKey fallback."
+                  `[Dialog] endingCG failed to load ("${this.endingCGPath}") and no valid endingCGKey fallback.`
                 );
               }
             }
           );
         } else if (this.endingCGKey && window[this.endingCGKey]) {
-          // Directly use preloaded image by key
           this.endingCG = window[this.endingCGKey];
         }
       }
-      // set up the first line (including CG)
+
+      // set up the first line (including CG & per-line audio)
       this._prepareLineCGAndText();
     }
 
@@ -159,10 +188,9 @@
       }
 
       if (this.finished) {
-        // Ending screen if we're in "ending" mode
+        // Ending screen if we're in "ending" mode — only draw the endcard image
         if (this.mode === "ending") {
           if (this.endingCG && this.endingCG.width) {
-            // Just draw the ending card image, no overlay text
             p.image(this.endingCG, 0, 0, this.W, this.H);
           }
         }
@@ -170,10 +198,10 @@
         return;
       }
 
-      // Dialog box image
+      // Dialog box image (62×20) at (1,43)
       if (UI.boxImg) p.image(UI.boxImg, UI.boxX, UI.boxY, UI.boxW, UI.boxH);
 
-      // Visible (typewriter) text
+      // Visible (typewriter) text inside 58×16 area
       const visible = this._visibleText();
       const wrapped = this._wrap(visible, UI.textW);
       let ty = UI.textY;
@@ -181,21 +209,24 @@
       p.fill(255);
       for (const ln of wrapped) {
         p.text(ln, UI.textX, ty);
-        ty += 8;
-        if (ty > UI.textY + UI.textH - 6) break;
+        ty += 8; // line height at font size 8
+        if (ty > UI.textY + UI.textH - 6) break; // clip
       }
 
       // ▼ continue arrow (blink) when line fully revealed
       const full = this._currentText() || "";
       if (visible.length === full.length && full.length > 0) {
+        const arrowCfg = getArrowCfg();
         const t = millis() - this._arrowBlinkAnchor;
-        const show = Math.floor(t / this.cfg.arrowBlinkMs) % 2 === 0;
+        const show = Math.floor(t / (arrowCfg.arrowBlinkMs || 550)) % 2 === 0;
         if (show) {
+          const c = arrowCfg.arrowColor || [255, 255, 255, 230];
+          p.fill(c[0] ?? 255, c[1] ?? 255, c[2] ?? 255, c[3] ?? 255);
           p.textAlign(RIGHT, BOTTOM);
           p.text(
-            DIALOG_ARROW_POS.arrowText,
-            DIALOG_ARROW_POS.textX + DIALOG_ARROW_POS.textW - 2,
-            DIALOG_ARROW_POS.textY + DIALOG_ARROW_POS.textH - 1
+            arrowCfg.arrowText || ">",
+            (arrowCfg.textX ?? UI.textX) + (arrowCfg.textW ?? UI.textW) - 2,
+            (arrowCfg.textY ?? UI.textY) + (arrowCfg.textH ?? UI.textH) - 1
           );
           p.textAlign(LEFT, TOP);
         }
@@ -263,13 +294,17 @@
       // Set CG for this line if provided
       const e = this.lines[this.index] || null;
       if (e && e.cg) this._setCurrentCG(e.cg);
-      // text typewriter resets handled in _startLine above
+
+      // 🔊 per-line one-shot SFX (e.audio is a name in SFX bank)
+      if (e && e.audio && window.SFX) {
+        SFX.playOnce(e.audio);
+      }
     }
 
     _setCurrentCG(key) {
       this.currentCGKey = key;
       this.currentCGImg = null;
-      const path = `assets/dialog/${key}.png`; // <--- CGs now in assets/dialog/
+      const path = `assets/dialog/${key}.png`;
       if (CG_CACHE.has(key)) {
         this.currentCGImg = CG_CACHE.get(key);
       } else {
@@ -301,7 +336,7 @@
         } else {
           if (line) out.push(line);
           if (p.textWidth(words[i]) > maxWidth) {
-            // Very long word: hard break (with pixel fonts, this is rare)
+            // Very long word: hard break
             out.push(words[i]);
             line = "";
           } else {

@@ -98,7 +98,6 @@
       this.H = shared.H;
       this.SCALE = shared.SCALE;
       this.pixelFont = shared.font;
-      this.basementIntroShown = false;
 
       this.globalScore = 0;
 
@@ -163,6 +162,10 @@
 
       this._arrowBlinkAnchor = millis();
       this._reminderArrowBlinkAnchor = millis();
+
+      // TRUE_ENDING intro card gating (ui_basement_ex)
+      this.basementIntroShown = true; // start hidden by default
+      this._basementIntroBlinkAnchor = 0; // own blink timer
 
       this._dayAnimBg = typeof bg_frame !== "undefined" ? bg_frame : null;
     }
@@ -328,14 +331,22 @@
       const endingType = _pickEndingType(finalScore);
 
       if (endingType === "true") {
+        // show summary after true path (so don't suppress)
         this._suppressFinalSummary = false;
+
+        // 1) dia_endTrue1, then show basement intro card, then mini-game, then dia_endTrue2
         this.dialog.start({ id: DLG.endTrue1, mode: "normal" });
         this.state = S.DIALOG;
+
         this._pendingAfterDialog = () => {
           this._pendingTrueDialog2 = true;
+
+          // show intro card first — wait for user click in TRUE_ENDING state
           this.basementIntroShown = false;
+          this._basementIntroBlinkAnchor = millis();
+
           this.state = S.TRUE_ENDING;
-          this.endingTrue.start({ sceneRepeatTarget: 3 });
+          // DO NOT start endingTrue yet; start when intro is dismissed
         };
       } else if (endingType === "normal") {
         this.dialog.start({ id: DLG.endNormal, mode: "ending" });
@@ -396,15 +407,8 @@
           break;
         }
         case S.TRUE_ENDING: {
-          // If intro not acknowledged yet, just wait for click/key to flip the flag.
-          if (!this.basementIntroShown) {
-            if (mouseIsPressed || keyIsPressed) {
-              this.basementIntroShown = true;
-              if (window.SFX) SFX.playOnce("text_advance");
-              this.endingTrue.start({ sceneRepeatTarget: 3 }); // start mini-game now
-            }
-            break; // don’t update mini-game yet
-          }
+          // Wait on basement intro card; no mini-game updates yet.
+          if (!this.basementIntroShown) break;
 
           // Mini-game running
           this.endingTrue.update(0);
@@ -414,6 +418,7 @@
               this.dialog.start({ id: DLG.endTrue2, mode: "ending" });
               this.state = S.DIALOG;
               this._pendingAfterDialog = () => {
+                // show final summary after the true flow finishes
                 this._suppressFinalSummary = false;
                 this.state = S.GAME_END;
               };
@@ -526,7 +531,7 @@
               this.pix.image(ui_basement_ex, 0, 0, this.W, this.H);
             }
             // Blink the same advance arrow
-            if (_arrowBlinkShow(this._arrowBlinkAnchor)) {
+            if (_arrowBlinkShow(this._basementIntroBlinkAnchor)) {
               _drawAdvanceArrow(this.pix);
             }
             break; // don’t draw mini-game yet
@@ -615,7 +620,7 @@
 
     // --- DEBUG: force full true-ending flow (dia_endTrue1 → EndingTrue → dia_endTrue2)
     _startTrueEndingSequenceDebug() {
-      // match the real true path behavior
+      // keep summary visible at the end of true path
       this._suppressFinalSummary = false;
 
       // clear any pending transitions
@@ -626,11 +631,12 @@
       this.dialog.start({ id: "dia_endTrue1", mode: "normal" });
       this.state = S.DIALOG;
 
-      // after dialog, run the minigame, then dia_endTrue2
+      // after dialog, run intro card then minigame, then dia_endTrue2
       this._pendingAfterDialog = () => {
         this._pendingTrueDialog2 = true;
+        this.basementIntroShown = false;
+        this._basementIntroBlinkAnchor = millis();
         this.state = S.TRUE_ENDING;
-        this.endingTrue.start({ sceneRepeatTarget: 3 }); // keep your current target
       };
     }
 
@@ -662,9 +668,17 @@
           }
           break;
         }
-        case S.TRUE_ENDING:
-          this.endingTrue.mousePressed();
+        case S.TRUE_ENDING: {
+          if (!this.basementIntroShown) {
+            this.basementIntroShown = true;
+            if (window.SFX) SFX.playOnce("text_advance");
+            // now start the mini-game
+            this.endingTrue.start({ sceneRepeatTarget: 3 });
+          } else {
+            this.endingTrue.mousePressed();
+          }
           break;
+        }
       }
     }
     mouseDragged() {
@@ -688,7 +702,6 @@
       }
 
       // DEBUG: jump to endcards
-
       if (k === "1") {
         console.log("[DEBUG] Jumping to Bad Ending");
         this.startDialog("dia_endBad", "ending", true);
@@ -701,7 +714,7 @@
       }
       if (k === "3") {
         console.log(
-          "[DEBUG] Running full True Ending flow (dia_endTrue1 -> mini-game -> dia_endTrue2)"
+          "[DEBUG] Running full True Ending flow (dia_endTrue1 -> intro -> mini-game -> dia_endTrue2)"
         );
         this._startTrueEndingSequenceDebug();
         return;

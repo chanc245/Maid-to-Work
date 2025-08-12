@@ -44,7 +44,11 @@ const DIALOGS = {
     lines: [
       { cg: "cg_endTrue3_stairEnd", text: "What awaited me at" },
       { cg: "cg_endTrue3_stairEnd", text: "the end of the basement was…" },
-      { cg: "cg_endTrue4_spider", text: "A mysterious spider!" },
+      {
+        cg: "cg_endTrue4_spider",
+        text: "A mysterious spider!",
+        audio: "basement_spider",
+      },
       { cg: "cg_endTrue5_ohNo", text: "Oh no! This spider… it’s…" },
       { cg: "cg_endTrue6_worry", text: "It’s starving! I guess" },
       { cg: "cg_endTrue6_worry", text: "the last meal wasn’t enough." },
