@@ -56,6 +56,12 @@
         this.stairGifEl.position(0, 0);
         this.stairGifEl.style("pointer-events", "none");
         this.stairGifEl.style("image-rendering", "pixelated");
+
+        this.stairGifEl.attribute("draggable", "false");
+        this.stairGifEl.style("-webkit-user-drag", "none");
+        this.stairGifEl.style("user-drag", "none");
+        this.stairGifEl.style("user-select", "none");
+        this.stairGifEl.style("-webkit-user-select", "none");
       }
       this.stairGifEl.hide();
 

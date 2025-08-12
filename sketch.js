@@ -125,6 +125,8 @@ function setup() {
   if (cnv) {
     cnv.style.imageRendering = "pixelated";
     cnv.style.touchAction = "none"; // prevent browser gestures on touch
+    cnv.setAttribute("draggable", "false");
+    cnv.addEventListener("dragstart", (e) => e.preventDefault());
   }
 
   manager = new GameManager({ pix, W, H, SCALE, font: pixelFont });
