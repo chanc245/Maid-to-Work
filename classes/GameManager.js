@@ -206,6 +206,11 @@
         type: "IMAGE",
         img: typeof cg_title !== "undefined" ? cg_title : null,
       });
+      steps.push({
+        type: "IMAGE",
+        img:
+          typeof cg_triggerWarning !== "undefined" ? cg_triggerWarning : null,
+      });
       steps.push({ type: "DIALOG", id: DLG.intro, mode: "normal" });
 
       addRTC(

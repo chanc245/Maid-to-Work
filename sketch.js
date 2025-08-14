@@ -42,6 +42,7 @@ function preload() {
 
   // Title + frame + tutorial cards
   cg_title = loadImage("assets/dialog/cg_title.png");
+  cg_triggerWarning = loadImage("assets/dialog/cg_triggerWarning.png");
   bg_frame = loadImage("assets/ui/bg_frame.png");
 
   ui_mouse = loadImage("assets/ui/ui_mouse.png");
